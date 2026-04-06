@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#FF6B6B">
+    <title>koko.app - Konuşarak Almanca Öğren</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        :root {
+            --primary: #FF6B6B;
+            --primary-dark: #EE5A5A;
+            --secondary: #4ECDC4;
+            --success: #95E1D3;
+            --warning: #F38181;
+            --bg: #2C3E50;
+            --surface: #34495E;
+            --surface-light: #445566;
+            --text: #ECF0F1;
+            --text-muted: #BDC3C7;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #2C3E50 0%, #1a1a2e 100%);
+            color: var(--text);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .header {
+            padding: 15px 20px;
+            text-align: center;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -1px;
+        }
+
+        .tagline {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 10px;
+            background: rgba(0,0,0,0.1);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .status-dot.speaking {
+            background: var(--secondary);
+            box-shadow: 0 0 10px var(--secondary);
+            animation: pulse 1s infinite;
+        }
+
+        .status-dot.listening {
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+            animation: pulse 0.5s infinite;
+        }
+
+        .status-dot.success {
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .main-display {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .voice-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin-bottom: 30px;
+        }
+
+        .voice-wave {
+            position: absolute;
+            border: 3px solid var(--primary);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+        }
+
+        .voice-wave.speaking {
+            border-color: var(--secondary);
+            animation: voice-wave 1.5s infinite;
+        }
+
+        .voice-wave.listening {
+            border-color: var(--primary);
+            animation: voice-wave 1s infinite;
+        }
+
+        .voice-wave:nth-child(1).speaking, .voice-wave:nth-child(1).listening { animation-delay: 0s; }
+        .voice-wave:nth-child(2).speaking, .voice-wave:nth-child(2).listening { animation-delay: 0.3s; }
+        .voice-wave:nth-child(3).speaking, .voice-wave:nth-child(3).listening { animation-delay: 0.6s; }
+
+        @keyframes voice-wave {
+            0% { width: 50px; height: 50px; opacity: 1; }
+            100% { width: 200px; height: 200px; opacity: 0; }
+        }
+
+        .voice-core {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--surface) 0%, var(--surface-light) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .voice-core.speaking {
+            background: linear-gradient(135deg, var(--secondary) 0%, #3DBCB4 100%);
+            animation: core-pulse 1s infinite;
+        }
+
+        .voice-core.listening {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            animation: core-pulse 0.5s infinite;
+        }
+
+        .voice-core.success {
+            background: linear-gradient(135deg, var(--success) 0%, #7DD3C0 100%);
+        }
+
+        @keyframes core-pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .word-section {
+            text-align: center;
+            margin-bottom: 20px;
+            min-height: 200px;
+        }
+
+        .category-label {
+            font-size: 14px;
+            color: var(--secondary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .german-word {
+            font-size: 56px;
+            font-weight: 800;
+            margin: 10px 0;
+            line-height: 1.2;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .article {
+            color: var(--secondary);
+            font-size: 32px;
+            margin-right: 10px;
+        }
+
+        .phonetic {
+            font-size: 20px;
+            color: var(--text-muted);
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+        }
+
+        .turkish-meaning {
+            font-size: 36px;
+            color: var(--success);
+            margin-top: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+            font-weight: 700;
+        }
+
+        .turkish-meaning.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .progress-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            text-align: right;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .progress-bar {
+            width: 100px;
+            height: 4px;
+            background: var(--surface);
+            border-radius: 2px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        .status-message {
+            font-size: 18px;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 30px;
+            margin-top: 10px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status-message.show {
+            opacity: 1;
+        }
+
+        .status-message.speaking {
+            color: var(--secondary);
+        }
+
+        .status-message.listening {
+            color: var(--primary);
+        }
+
+        .status-message.success {
+            color: var(--success);
+        }
+
+        .status-message.error {
+            color: var(--warning);
+        }
+
+        .commands {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            opacity: 0.7;
+        }
+
+        .command-hint {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin: 5px 0;
+            padding: 8px 16px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 20px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .start-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+
+        .start-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .start-title {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .start-subtitle {
+            font-size: 16px;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        .flow-diagram {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            max-width: 90%;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .flow-number {
+            width: 30px;
+            height: 30px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+
+        .start-btn {
+            padding: 20px 60px;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 40px rgba(255, 107, 107, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: confetti-fall 3s ease-out forwards;
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Start Overlay -->
+        <div class="start-overlay" id="startOverlay">
+            <div class="start-title">koko.app</div>
+            <div class="start-subtitle">Konuşarak Almanca Öğren</div>
+
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <div class="flow-number">1</div>
+                    <span>Program kelimeyi söyler</span>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-number">2</div>
+                    <span>Siz tekrar edersiniz</span>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-number">3</div>
+                    <span>Doğru ise anlamı söyler ve geçer</span>
+                </div>
+            </div>
+
+            <button class="start-btn" onclick="app.start()">🎙️ BAŞLA</button>
+            <div style="margin-top: 30px; font-size: 13px; color: var(--text-muted); text-align: center; line-height: 1.6;">
+                Mikrofon izni gereklidir<br>
+                Hiç dokunmadan öğrenin
+            </div>
+        </div>
+
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">koko.app</div>
+            <div class="tagline">hands-free learning</div>
+        </header>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Hazır</span>
+            </div>
+            <div class="status-item">
+                <span>🎯</span>
+                <span id="dailyProgress">0/20</span>
+            </div>
+        </div>
+
+        <!-- Main Display -->
+        <div class="main-display">
+            <div class="progress-info">
+                <div class="progress-text"><span id="currentIndex">1</span> / <span id="totalWords">20</span></div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar"></div>
+                </div>
+            </div>
+
+            <div class="voice-container">
+                <div class="voice-wave" id="wave1"></div>
+                <div class="voice-wave" id="wave2"></div>
+                <div class="voice-wave" id="wave3"></div>
+                <div class="voice-core" id="voiceCore">🎙️</div>
+            </div>
+
+            <div class="word-section">
+                <div class="category-label" id="categoryLabel">SAYILAR</div>
+                <div class="german-word">
+                    <span class="article" id="wordArticle">das</span>
+                    <span id="germanText">Haus</span>
+                </div>
+                <div class="phonetic" id="phoneticText">[haus]</div>
+                <div class="turkish-meaning" id="turkishText">ev</div>
+
+                <div class="status-message" id="statusMessage"></div>
+            </div>
+
+            <div class="commands" id="commands">
+                <div class="command-hint">🗣️ Kelimeyi söyleyin</div>
+                <div class="command-hint">💡 "anla" = anlamı göster | "geç" = atla | "tekrar" = tekrar dinle</div>
+            </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat">
+                <div class="stat-value" id="correctCount">0</div>
+                <div class="stat-label">Doğru</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="streakCount">0</div>
+                <div class="stat-label">Seri</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="accuracy">0%</div>
+                <div class="stat-label">Başarı</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="sessionTime">00:00</div>
+                <div class="stat-label">Süre</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // koko.app v2.3 - Tam Düzeltilmiş Versiyon (Ses + loadWord hatası giderildi)
+
+        const vocabulary = {
+            numbers: {
+                name: "SAYILAR",
+                words: [
+                    {de: "null", tr: "sıfır", phonetic: "[nul]"},
+                    {de: "eins", tr: "bir", phonetic: "[ayns]"},
+                    {de: "zwei", tr: "iki", phonetic: "[tsvay]"},
+                    {de: "drei", tr: "üç", phonetic: "[dray]"},
+                    {de: "vier", tr: "dört", phonetic: "[fir]"},
+                    {de: "fünf", tr: "beş", phonetic: "[funf]"},
+                    {de: "sechs", tr: "altı", phonetic: "[zeks]"},
+                    {de: "sieben", tr: "yedi", phonetic: "[zee-ben]"},
+                    {de: "acht", tr: "sekiz", phonetic: "[aht]"},
+                    {de: "neun", tr: "dokuz", phonetic: "[noyn]"},
+                    {de: "zehn", tr: "on", phonetic: "[tsayn]"},
+                    {de: "elf", tr: "on bir", phonetic: "[elf]"},
+                    {de: "zwölf", tr: "on iki", phonetic: "[tsvölf]"},
+                    {de: "zwanzig", tr: "yirmi", phonetic: "[tsvan-tsiç]"},
+                    {de: "dreißig", tr: "otuz", phonetic: "[dray-siç]"},
+                    {de: "vierzig", tr: "kırk", phonetic: "[fir-tsiç]"},
+                    {de: "fünfzig", tr: "elli", phonetic: "[funf-tsiç]"},
+                    {de: "sechzig", tr: "altmış", phonetic: "[zeks-tsiç]"},
+                    {de: "siebzig", tr: "yetmiş", phonetic: "[zeep-tsiç]"},
+                    {de: "achtzig", tr: "seksen", phonetic: "[aht-tsiç]"},
+                    {de: "neunzig", tr: "doksan", phonetic: "[noyn-tsiç]"},
+                    {de: "hundert", tr: "yüz", phonetic: "[hun-dert]"},
+                    {de: "tausend", tr: "bin", phonetic: "[tow-zent]"}
+                ]
+            },
+            greetings: {
+                name: "SELAMLAŞMA",
+                words: [
+                    {de: "Hallo", tr: "Merhaba", phonetic: "[ha-lo]"},
+                    {de: "Guten Morgen", tr: "Günaydın", phonetic: "[gu-ten mor-gen]"},
+                    {de: "Guten Tag", tr: "İyi günler", phonetic: "[gu-ten tak]"},
+                    {de: "Guten Abend", tr: "İyi akşamlar", phonetic: "[gu-ten a-bent]"},
+                    {de: "Gute Nacht", tr: "İyi geceler", phonetic: "[gu-te naht]"},
+                    {de: "Tschüss", tr: "Hoşça kal", phonetic: "[çüs]"},
+                    {de: "Auf Wiedersehen", tr: "Güle güle", phonetic: "[auf vi-der-zey-en]"},
+                    {de: "Danke", tr: "Teşekkür ederim", phonetic: "[dan-ke]"},
+                    {de: "Bitte", tr: "Lütfen", phonetic: "[bi-te]"},
+                    {de: "Ja", tr: "Evet", phonetic: "[ya]"},
+                    {de: "Nein", tr: "Hayır", phonetic: "[nayn]"}
+                ]
+            },
+            family: {
+                name: "AİLE",
+                words: [
+                    {de: "die Familie", tr: "aile", article: "die", phonetic: "[fa-mi-li-e]"},
+                    {de: "der Vater", tr: "baba", article: "der", phonetic: "[fa-ter]"},
+                    {de: "die Mutter", tr: "anne", article: "die", phonetic: "[mu-ter]"},
+                    {de: "der Sohn", tr: "oğul", article: "der", phonetic: "[zon]"},
+                    {de: "die Tochter", tr: "kız evlat", article: "die", phonetic: "[toh-ter]"},
+                    {de: "der Bruder", tr: "erkek kardeş", article: "der", phonetic: "[bru-der]"},
+                    {de: "die Schwester", tr: "kız kardeş", article: "die", phonetic: "[shves-ter]"},
+                    {de: "der Mann", tr: "adam", article: "der", phonetic: "[man]"},
+                    {de: "die Frau", tr: "kadın", article: "die", phonetic: "[frau]"},
+                    {de: "das Kind", tr: "çocuk", article: "das", phonetic: "[kint]"}
+                ]
+            },
+            home: {
+                name: "EV",
+                words: [
+                    {de: "das Haus", tr: "ev", article: "das", phonetic: "[haus]"},
+                    {de: "die Wohnung", tr: "daire", article: "die", phonetic: "[voh-nung]"},
+                    {de: "das Zimmer", tr: "oda", article: "das", phonetic: "[tsi-mer]"},
+                    {de: "die Küche", tr: "mutfak", article: "die", phonetic: "[kü-he]"},
+                    {de: "das Bad", tr: "banyo", article: "das", phonetic: "[bat]"},
+                    {de: "der Tisch", tr: "masa", article: "der", phonetic: "[tiş]"},
+                    {de: "der Stuhl", tr: "sandalye", article: "der", phonetic: "[shtul]"},
+                    {de: "das Bett", tr: "yatak", article: "das", phonetic: "[bet]"},
+                    {de: "die Tür", tr: "kapı", article: "die", phonetic: "[tür]"},
+                    {de: "das Fenster", tr: "pencere", article: "das", phonetic: "[fen-ster]"}
+                ]
+            },
+            food: {
+                name: "YİYECEK",
+                words: [
+                    {de: "das Brot", tr: "ekmek", article: "das", phonetic: "[brot]"},
+                    {de: "der Käse", tr: "peynir", article: "der", phonetic: "[key-ze]"},
+                    {de: "das Ei", tr: "yumurta", article: "das", phonetic: "[ay]"},
+                    {de: "das Fleisch", tr: "et", article: "das", phonetic: "[flaiş]"},
+                    {de: "der Fisch", tr: "balık", article: "der", phonetic: "[fiş]"},
+                    {de: "das Obst", tr: "meyve", article: "das", phonetic: "[opst]"},
+                    {de: "der Apfel", tr: "elma", article: "der", phonetic: "[ap-fel]"},
+                    {de: "die Milch", tr: "süt", article: "die", phonetic: "[milh]"},
+                    {de: "das Wasser", tr: "su", article: "das", phonetic: "[va-ser]"},
+                    {de: "der Kaffee", tr: "kahve", article: "der", phonetic: "[ka-fey]"}
+                ]
+            },
+            colors: {
+                name: "RENKLER",
+                words: [
+                    {de: "rot", tr: "kırmızı", phonetic: "[rot]"},
+                    {de: "blau", tr: "mavi", phonetic: "[blau]"},
+                    {de: "grün", tr: "yeşil", phonetic: "[grün]"},
+                    {de: "gelb", tr: "sarı", phonetic: "[gelp]"},
+                    {de: "schwarz", tr: "siyah", phonetic: "[shvarts]"},
+                    {de: "weiß", tr: "beyaz", phonetic: "[vays]"},
+                    {de: "braun", tr: "kahverengi", phonetic: "[braun]"},
+                    {de: "grau", tr: "gri", phonetic: "[grau]"}
+                ]
+            }
+        };
+
+        class KokoApp {
+            constructor() {
+                this.currentCategory = 'numbers';
+                this.currentIndex = 0;
+                this.correctCount = 0;
+                this.totalAttempts = 0;
+                this.streak = 0;
+                this.isListening = false;
+                this.isSpeaking = false;
+                this.sessionStartTime = null;
+
+                this.recognition = null;
+                this.synth = window.speechSynthesis;
+                this.germanVoice = null;
+                this.turkishVoice = null;
+
+                this.init();
+            }
+
+            init() {
+                this.setupVoices();
+                this.setupSpeechRecognition();
+                this.loadWord();
+                this.startSessionTimer();
+            }
+
+            setupVoices() {
+                if (!this.synth) return;
+
+                const loadVoices = () => {
+                    const voices = this.synth.getVoices();
+                    this.germanVoice = voices.find(v => v.lang.includes('de')) || voices.find(v => v.name.toLowerCase().includes('deutsch')) || null;
+                    this.turkishVoice = voices.find(v => v.lang.includes('tr')) || voices.find(v => v.name.toLowerCase().includes('turkish') || v.name.toLowerCase().includes('tolga')) || null;
+
+                    console.log('Sesler yüklendi → DE:', this.germanVoice ? this.germanVoice.name : 'YOK', 
+                               '| TR:', this.turkishVoice ? this.turkishVoice.name : 'YOK');
+                };
+
+                this.synth.onvoiceschanged = loadVoices;
+                loadVoices();
+                setTimeout(loadVoices, 1000);   // Chrome için ekstra güvenlik
+            }
+
+            setupSpeechRecognition() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    alert("Tarayıcınız konuşma tanımayı desteklemiyor. Chrome kullanmanızı öneririm.");
+                    return;
+                }
+
+                this.recognition = new SpeechRecognition();
+                this.recognition.continuous = false;
+                this.recognition.interimResults = false;
+                this.recognition.lang = 'de-DE';
+
+                this.recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript.toLowerCase().trim();
+                    console.log('Duyulan:', transcript);
+                    this.handleStudentResponse(transcript);
+                };
+
+                this.recognition.onerror = (event) => {
+                    console.error('Recognition error:', event.error);
+                    this.setListeningState(false);
+                    this.showStatus('Ses algılanmadı. Tekrar deneyin.', 'error');
+                    setTimeout(() => this.startListening(), 1800);
+                };
+
+                this.recognition.onend = () => {
+                    this.setListeningState(false);
+                };
+            }
+
+            start() {
+                if (window.location.protocol === 'file:') {
+                    alert("⚠️ Bu uygulama yerel dosyadan (file://) çalışmaz!\n\nLütfen Live Server ile açın veya internete yükleyin.");
+                    return;
+                }
+
+                document.getElementById('startOverlay').classList.add('hidden');
+                this.sessionStartTime = Date.now();
+
+                setTimeout(() => {
+                    this.speakCurrentWord();
+                }, 600);
+            }
+
+            speakCurrentWord() {
+                const word = this.getCurrentWord();
+                let textToSpeak = word.article ? `${word.article} ${word.de}` : word.de;
+
+                this.setSpeakingState(true);
+                this.showStatus('Dinleyin...', 'speaking');
+
+                this.speakText(textToSpeak, 'de-DE', () => {
+                    this.setSpeakingState(false);
+                    setTimeout(() => this.startListening(), 400);
+                });
+            }
+
+            speakText(text, lang, onEnd = null) {
+                if (!this.synth) {
+                    if (onEnd) onEnd();
+                    return;
+                }
+
+                this.synth.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 0.85;
+                utterance.pitch = 1.0;
+
+                if (lang.includes('de') && this.germanVoice) utterance.voice = this.germanVoice;
+                if (lang.includes('tr') && this.turkishVoice) utterance.voice = this.turkishVoice;
+
+                if (onEnd) utterance.onend = onEnd;
+                this.synth.speak(utterance);
+            }
+
+            startListening() {
+                if (!this.recognition) return;
+                this.setListeningState(true);
+                this.showStatus('Sıra sizde... Tekrar edin', 'listening');
+                try {
+                    this.recognition.start();
+                } catch (e) {
+                    setTimeout(() => this.startListening(), 200);
+                }
+            }
+
+            handleStudentResponse(text) {
+                this.setListeningState(false);
+
+                if (this.isCommand(text)) {
+                    this.handleCommand(text);
+                    return;
+                }
+
+                const currentWord = this.getCurrentWord();
+                const target = currentWord.de.toLowerCase();
+                const similarity = this.calculateSimilarity(text, target);
+                const contains = text.includes(target) || target.includes(text);
+
+                if (similarity > 0.65 || contains) {
+                    this.handleCorrect();
+                } else {
+                    this.handleIncorrect(text);
+                }
+            }
+
+            handleCorrect() {
+                this.correctCount++;
+                this.streak++;
+                this.totalAttempts++;
+                this.updateStats();
+
+                const word = this.getCurrentWord();
+                this.showStatus('Mükemmel! ✅', 'success');
+                this.createConfetti();
+                document.getElementById('turkishText').classList.add('show');
+
+                this.setSpeakingState(true);
+                this.speakText(word.tr, 'tr-TR', () => {
+                    this.setSpeakingState(false);
+                    setTimeout(() => this.nextWord(), 1200);
+                });
+            }
+
+            handleIncorrect(spokenText) {
+                this.streak = 0;
+                this.totalAttempts++;
+                this.updateStats();
+                this.showStatus(`Duyulan: "${spokenText}" — Tekrar deneyin`, 'error');
+                setTimeout(() => this.startListening(), 1800);
+            }
+
+            nextWord() {
+                const words = vocabulary[this.currentCategory].words;
+                this.currentIndex = (this.currentIndex + 1) % words.length;
+                if (this.currentIndex === 0) this.switchToNextCategory();
+                this.loadWord();
+                setTimeout(() => this.speakCurrentWord(), 500);
+            }
+
+            switchToNextCategory() {
+                const categories = Object.keys(vocabulary);
+                let idx = categories.indexOf(this.currentCategory);
+                this.currentCategory = categories[(idx + 1) % categories.length];
+            }
+
+            loadWord() {
+                const word = this.getCurrentWord();
+                const words = vocabulary[this.currentCategory].words;
+
+                document.getElementById('turkishText').classList.remove('show');
+                document.getElementById('categoryLabel').textContent = vocabulary[this.currentCategory].name;
+                document.getElementById('currentIndex').textContent = this.currentIndex + 1;
+                document.getElementById('totalWords').textContent = words.length;
+                document.getElementById('germanText').textContent = word.de;
+                document.getElementById('phoneticText').textContent = word.phonetic;
+                document.getElementById('turkishText').textContent = word.tr;
+
+                const articleEl = document.getElementById('wordArticle');
+                if (word.article) {
+                    articleEl.textContent = word.article;
+                    articleEl.style.display = 'inline';
+                } else {
+                    articleEl.style.display = 'none';
+                }
+
+                const progress = ((this.currentIndex + 1) / words.length) * 100;
+                document.getElementById('progressBar').style.width = progress + '%';
+            }
+
+            getCurrentWord() {
+                return vocabulary[this.currentCategory].words[this.currentIndex];
+            }
+
+            isCommand(text) {
+                const commands = ['anla', 'geç', 'atla', 'tekrar', 'stop', 'next', 'skip'];
+                return commands.some(cmd => text.includes(cmd));
+            }
+
+            handleCommand(text) {
+                if (text.includes('anla')) {
+                    document.getElementById('turkishText').classList.add('show');
+                    this.speakText(this.getCurrentWord().tr, 'tr-TR');
+                } else if (text.includes('geç') || text.includes('atla') || text.includes('next') || text.includes('skip')) {
+                    this.showStatus('Geçiliyor...', 'success');
+                    this.nextWord();
+                } else if (text.includes('tekrar')) {
+                    this.speakCurrentWord();
+                }
+            }
+
+            setSpeakingState(isSpeaking) {
+                this.isSpeaking = isSpeaking;
+                const core = document.getElementById('voiceCore');
+                const waves = document.querySelectorAll('.voice-wave');
+                const dot = document.getElementById('statusDot');
+
+                if (isSpeaking) {
+                    core.classList.add('speaking');
+                    core.textContent = '🔊';
+                    waves.forEach(w => w.classList.add('speaking'));
+                    dot.classList.add('speaking');
+                    document.getElementById('statusText').textContent = 'Konuşuyor';
+                } else {
+                    core.classList.remove('speaking');
+                    waves.forEach(w => w.classList.remove('speaking'));
+                    dot.classList.remove('speaking');
+                }
+            }
+
+            setListeningState(isListening) {
+                this.isListening = isListening;
+                const core = document.getElementById('voiceCore');
+                const waves = document.querySelectorAll('.voice-wave');
+                const dot = document.getElementById('statusDot');
+
+                if (isListening) {
+                    core.classList.add('listening');
+                    core.textContent = '🎙️';
+                    waves.forEach(w => w.classList.add('listening'));
+                    dot.classList.add('listening');
+                    document.getElementById('statusText').textContent = 'Dinliyor';
+                } else {
+                    core.classList.remove('listening');
+                    waves.forEach(w => w.classList.remove('listening'));
+                    dot.classList.remove('listening');
+                    document.getElementById('statusText').textContent = 'Hazır';
+                }
+            }
+
+            showStatus(message, type) {
+                const statusEl = document.getElementById('statusMessage');
+                statusEl.textContent = message;
+                statusEl.className = `status-message show ${type}`;
+
+                if (type !== 'success' && type !== 'error') {
+                    setTimeout(() => statusEl.classList.remove('show'), 3000);
+                }
+            }
+
+            calculateSimilarity(str1, str2) {
+                const len1 = str1.length;
+                const len2 = str2.length;
+                if (len1 === 0 || len2 === 0) return 0;
+
+                const matrix = Array.from({length: len1 + 1}, (_, i) => Array(len2 + 1).fill(0));
+                for (let i = 0; i <= len1; i++) matrix[i][0] = i;
+                for (let j = 0; j <= len2; j++) matrix[0][j] = j;
+
+                for (let i = 1; i <= len1; i++) {
+                    for (let j = 1; j <= len2; j++) {
+                        const cost = str1[i-1] === str2[j-1] ? 0 : 1;
+                        matrix[i][j] = Math.min(
+                            matrix[i-1][j] + 1,
+                            matrix[i][j-1] + 1,
+                            matrix[i-1][j-1] + cost
+                        );
+                    }
+                }
+                let sim = 1 - matrix[len1][len2] / Math.max(len1, len2);
+                if (Math.max(len1, len2) < 5) sim += 0.12;
+                return Math.min(1, sim);
+            }
+
+            updateStats() {
+                document.getElementById('correctCount').textContent = this.correctCount;
+                document.getElementById('streakCount').textContent = this.streak;
+                const accuracy = this.totalAttempts > 0 ? Math.round((this.correctCount / this.totalAttempts) * 100) : 0;
+                document.getElementById('accuracy').textContent = accuracy + '%';
+                document.getElementById('dailyProgress').textContent = this.correctCount + '/20';
+            }
+
+            startSessionTimer() {
+                setInterval(() => {
+                    if (!this.sessionStartTime) return;
+                    const elapsed = Math.floor((Date.now() - this.sessionStartTime) / 1000);
+                    const min = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                    const sec = (elapsed % 60).toString().padStart(2, '0');
+                    document.getElementById('sessionTime').textContent = `${min}:${sec}`;
+                }, 1000);
+            }
+
+            createConfetti() {
+                const colors = ['#FF6B6B', '#4ECDC4', '#95E1D3', '#F38181'];
+                for (let i = 0; i < 20; i++) {
+                    const c = document.createElement('div');
+                    c.className = 'confetti';
+                    c.style.left = Math.random() * 100 + 'vw';
+                    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    c.style.animationDelay = Math.random() * 0.6 + 's';
+                    document.body.appendChild(c);
+                    setTimeout(() => c.remove(), 3500);
+                }
+            }
+        }
+
+        const app = new KokoApp();
+        window.app = app;   // onclick için gerekli
+    </script>
+</body>
+</html>
