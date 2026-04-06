@@ -482,27 +482,15 @@
         </div>
 
         <div class="stats-bar">
-            <div class="stat">
-                <div class="stat-value" id="correctCount">0</div>
-                <div class="stat-label">Doğru</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value" id="streakCount">0</div>
-                <div class="stat-label">Seri</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value" id="accuracy">0%</div>
-                <div class="stat-label">Başarı</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value" id="sessionTime">00:00</div>
-                <div class="stat-label">Süre</div>
-            </div>
+            <div class="stat"><div class="stat-value" id="correctCount">0</div><div class="stat-label">Doğru</div></div>
+            <div class="stat"><div class="stat-value" id="streakCount">0</div><div class="stat-label">Seri</div></div>
+            <div class="stat"><div class="stat-value" id="accuracy">0%</div><div class="stat-label">Başarı</div></div>
+            <div class="stat"><div class="stat-value" id="sessionTime">00:00</div><div class="stat-label">Süre</div></div>
         </div>
     </div>
 
     <script>
-        // koko.app v2.5 - İlerleme Sorunu Çözülmüş Son Versiyon
+        // koko.app v2.7 - Almanca Ses Düzeltmesi + Stabil İlerleme
 
         const vocabulary = {
             numbers: {
@@ -558,14 +546,66 @@
 
             setupVoices() {
                 if (!this.synth) return;
+
                 const loadVoices = () => {
                     const voices = this.synth.getVoices();
-                    this.germanVoice = voices.find(v => v.lang.includes('de')) || null;
-                    this.turkishVoice = voices.find(v => v.lang.includes('tr')) || null;
+
+                    // Almanca ses için çok daha güçlü arama
+                    this.germanVoice = voices.find(v => v.lang === 'de-DE') ||
+                                      voices.find(v => v.name.toLowerCase().includes('deutsch')) ||
+                                      voices.find(v => v.name.toLowerCase().includes('german')) ||
+                                      voices.find(v => v.lang.startsWith('de')) || null;
+
+                    this.turkishVoice = voices.find(v => v.lang === 'tr-TR') ||
+                                       voices.find(v => v.name.toLowerCase().includes('turkish') || v.name.toLowerCase().includes('tolga')) || null;
+
+                    console.log('✅ Almanca ses:', this.germanVoice ? this.germanVoice.name : 'BULUNAMADI');
+                    console.log('✅ Türkçe ses:', this.turkishVoice ? this.turkishVoice.name : 'BULUNAMADI');
                 };
+
                 this.synth.onvoiceschanged = loadVoices;
                 loadVoices();
-                setTimeout(loadVoices, 1000);
+                setTimeout(loadVoices, 1500); // Chrome için ekstra bekleme
+            }
+
+            speak(text, lang) {
+                if (!this.synth) return;
+                this.synth.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = lang.includes('de') ? 0.82 : 0.92;  // Almanca biraz daha yavaş ve net
+                utterance.pitch = 1.0;
+
+                if (lang.includes('de') && this.germanVoice) {
+                    utterance.voice = this.germanVoice;
+                    utterance.lang = 'de-DE';
+                } else if (lang.includes('tr') && this.turkishVoice) {
+                    utterance.voice = this.turkishVoice;
+                    utterance.lang = 'tr-TR';
+                } else {
+                    utterance.lang = lang;
+                }
+
+                this.synth.speak(utterance);
+            }
+
+            speakCurrentWord() {
+                const word = this.getCurrentWord();
+                const textToSpeak = word.article ? `${word.article} ${word.de}` : word.de;
+
+                this.setSpeakingState(true);
+                this.showStatus('Dinleyin...', 'speaking');
+
+                this.speak(textToSpeak, 'de-DE');
+                setTimeout(() => {
+                    this.setSpeakingState(false);
+                    this.startListening();
+                }, 800);
+            }
+
+            start() {
+                document.getElementById('startOverlay').classList.add('hidden');
+                setTimeout(() => this.speakCurrentWord(), 600);
             }
 
             setupSpeechRecognition() {
@@ -586,61 +626,25 @@
                 this.recognition.onend = () => this.setListeningState(false);
             }
 
-            start() {
-                document.getElementById('startOverlay').classList.add('hidden');
-                setTimeout(() => this.speakCurrentWord(), 600);
-            }
-
-            speakCurrentWord() {
-                const word = this.getCurrentWord();
-                const textToSpeak = word.article ? `${word.article} ${word.de}` : word.de;
-
-                this.setSpeakingState(true);
-                this.showStatus('Dinleyin...', 'speaking');
-
-                this.speakText(textToSpeak, 'de-DE', () => {
-                    this.setSpeakingState(false);
-                    setTimeout(() => this.startListening(), 400);
-                });
-            }
-
-            speakText(text, lang) {
-                if (!this.synth) return;
-                this.synth.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.rate = 0.9;
-                utterance.pitch = 1.0;
-
-                if (lang.includes('de') && this.germanVoice) utterance.voice = this.germanVoice;
-                if (lang.includes('tr') && this.turkishVoice) utterance.voice = this.turkishVoice;
-
-                this.synth.speak(utterance);
-            }
-
             startListening() {
                 if (!this.recognition) return;
                 this.setListeningState(true);
                 this.showStatus('Sıra sizde... Tekrar edin', 'listening');
-                try {
-                    this.recognition.start();
-                } catch (e) {}
+                try { this.recognition.start(); } catch(e) {}
             }
 
             handleStudentResponse(text) {
                 this.setListeningState(false);
 
-                if (this.isCommand(text)) {
+                if (['anla','geç','atla','tekrar'].some(c => text.includes(c))) {
                     this.handleCommand(text);
                     return;
                 }
 
-                const currentWord = this.getCurrentWord();
-                const similarity = this.calculateSimilarity(text, currentWord.de.toLowerCase());
-                const contains = text.includes(currentWord.de.toLowerCase()) || currentWord.de.toLowerCase().includes(text);
+                const word = this.getCurrentWord();
+                const sim = this.calculateSimilarity(text, word.de.toLowerCase());
 
-                console.log(`Karşılaştırma → "${text}" vs "${currentWord.de}" | Benzerlik: ${similarity.toFixed(3)}`);
-
-                if (similarity > 0.58 || contains) {
+                if (sim > 0.58 || text.includes(word.de.toLowerCase())) {
                     this.handleCorrect();
                 } else {
                     this.handleIncorrect(text);
@@ -659,18 +663,13 @@
                 this.createConfetti();
                 document.getElementById('turkishText').classList.add('show');
 
-                // Türkçe anlamı sesli söyle
                 this.setSpeakingState(true);
-                this.speakText(word.tr, 'tr-TR');
+                this.speak(word.tr, 'tr-TR');
 
-                // ÇİFT GÜVENLİK - İlerleme garantisi
-                setTimeout(() => this.goToNext(), 2800);
-                setTimeout(() => this.goToNext(), 4500);
-            }
-
-            goToNext() {
-                this.setSpeakingState(false);
-                this.nextWord();
+                setTimeout(() => {
+                    this.setSpeakingState(false);
+                    this.nextWord();
+                }, 3200);
             }
 
             handleIncorrect(text) {
@@ -722,7 +721,7 @@
             handleCommand(text) {
                 if (text.includes('anla')) {
                     document.getElementById('turkishText').classList.add('show');
-                    this.speakText(this.getCurrentWord().tr, 'tr-TR');
+                    this.speak(this.getCurrentWord().tr, 'tr-TR');
                 } else if (text.includes('geç') || text.includes('atla') || text.includes('next') || text.includes('skip')) {
                     this.nextWord();
                 } else if (text.includes('tekrar')) {
@@ -730,14 +729,29 @@
                 }
             }
 
+            calculateSimilarity(str1, str2) {
+                const len1 = str1.length, len2 = str2.length;
+                if (len1 === 0 || len2 === 0) return 0;
+                const matrix = Array.from({length: len1 + 1}, () => Array(len2 + 1).fill(0));
+                for (let i = 0; i <= len1; i++) matrix[i][0] = i;
+                for (let j = 0; j <= len2; j++) matrix[0][j] = j;
+                for (let i = 1; i <= len1; i++) {
+                    for (let j = 1; j <= len2; j++) {
+                        const cost = str1[i-1] === str2[j-1] ? 0 : 1;
+                        matrix[i][j] = Math.min(matrix[i-1][j]+1, matrix[i][j-1]+1, matrix[i-1][j-1]+cost);
+                    }
+                }
+                let sim = 1 - matrix[len1][len2] / Math.max(len1, len2);
+                if (Math.max(len1, len2) <= 6) sim += 0.22;
+                return Math.min(1, sim);
+            }
+
             setSpeakingState(isSpeaking) {
                 const core = document.getElementById('voiceCore');
                 const waves = document.querySelectorAll('.voice-wave');
                 const dot = document.getElementById('statusDot');
-
                 if (isSpeaking) {
-                    core.classList.add('speaking');
-                    core.textContent = '🔊';
+                    core.classList.add('speaking'); core.textContent = '🔊';
                     waves.forEach(w => w.classList.add('speaking'));
                     dot.classList.add('speaking');
                     document.getElementById('statusText').textContent = 'Konuşuyor';
@@ -752,10 +766,8 @@
                 const core = document.getElementById('voiceCore');
                 const waves = document.querySelectorAll('.voice-wave');
                 const dot = document.getElementById('statusDot');
-
                 if (isListening) {
-                    core.classList.add('listening');
-                    core.textContent = '🎙️';
+                    core.classList.add('listening'); core.textContent = '🎙️';
                     waves.forEach(w => w.classList.add('listening'));
                     dot.classList.add('listening');
                     document.getElementById('statusText').textContent = 'Dinliyor';
@@ -773,46 +785,23 @@
                 el.className = `status-message show ${type}`;
             }
 
-            calculateSimilarity(str1, str2) {
-                const len1 = str1.length, len2 = str2.length;
-                if (len1 === 0 || len2 === 0) return 0;
-
-                const matrix = Array.from({length: len1 + 1}, () => Array(len2 + 1).fill(0));
-                for (let i = 0; i <= len1; i++) matrix[i][0] = i;
-                for (let j = 0; j <= len2; j++) matrix[0][j] = j;
-
-                for (let i = 1; i <= len1; i++) {
-                    for (let j = 1; j <= len2; j++) {
-                        const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
-                        matrix[i][j] = Math.min(
-                            matrix[i - 1][j] + 1,
-                            matrix[i][j - 1] + 1,
-                            matrix[i - 1][j - 1] + cost
-                        );
-                    }
-                }
-                let sim = 1 - matrix[len1][len2] / Math.max(len1, len2);
-                if (Math.max(len1, len2) <= 6) sim += 0.20;
-                return Math.min(1, sim);
-            }
-
             updateStats() {
                 document.getElementById('correctCount').textContent = this.correctCount;
                 document.getElementById('streakCount').textContent = this.streak;
-                const accuracy = this.totalAttempts > 0 ? Math.round((this.correctCount / this.totalAttempts) * 100) : 0;
-                document.getElementById('accuracy').textContent = accuracy + '%';
+                const acc = this.totalAttempts > 0 ? Math.round((this.correctCount / this.totalAttempts) * 100) : 0;
+                document.getElementById('accuracy').textContent = acc + '%';
                 document.getElementById('dailyProgress').textContent = this.correctCount + '/20';
             }
 
             createConfetti() {
                 const colors = ['#FF6B6B', '#4ECDC4', '#95E1D3'];
                 for (let i = 0; i < 18; i++) {
-                    const confetti = document.createElement('div');
-                    confetti.className = 'confetti';
-                    confetti.style.left = Math.random() * 100 + 'vw';
-                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
-                    document.body.appendChild(confetti);
-                    setTimeout(() => confetti.remove(), 3500);
+                    const c = document.createElement('div');
+                    c.className = 'confetti';
+                    c.style.left = Math.random() * 100 + 'vw';
+                    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    document.body.appendChild(c);
+                    setTimeout(() => c.remove(), 3500);
                 }
             }
         }
