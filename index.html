@@ -86,8 +86,17 @@
             background: var(--text-muted);
         }
 
-        .status-dot.speaking { background: var(--secondary); box-shadow: 0 0 10px var(--secondary); animation: pulse 1s infinite; }
-        .status-dot.listening { background: var(--primary); box-shadow: 0 0 10px var(--primary); animation: pulse 0.5s infinite; }
+        .status-dot.speaking {
+            background: var(--secondary);
+            box-shadow: 0 0 10px var(--secondary);
+            animation: pulse 1s infinite;
+        }
+
+        .status-dot.listening {
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+            animation: pulse 0.5s infinite;
+        }
 
         @keyframes pulse {
             0%, 100% { opacity: 1; }
@@ -121,8 +130,15 @@
             opacity: 0;
         }
 
-        .voice-wave.speaking { border-color: var(--secondary); animation: voice-wave 1.5s infinite; }
-        .voice-wave.listening { border-color: var(--primary); animation: voice-wave 1s infinite; }
+        .voice-wave.speaking {
+            border-color: var(--secondary);
+            animation: voice-wave 1.5s infinite;
+        }
+
+        .voice-wave.listening {
+            border-color: var(--primary);
+            animation: voice-wave 1s infinite;
+        }
 
         .voice-wave:nth-child(1).speaking, .voice-wave:nth-child(1).listening { animation-delay: 0s; }
         .voice-wave:nth-child(2).speaking, .voice-wave:nth-child(2).listening { animation-delay: 0.3s; }
@@ -380,6 +396,20 @@
             box-shadow: 0 10px 40px rgba(255, 107, 107, 0.4);
             transition: all 0.3s ease;
         }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: confetti-fall 3s ease-out forwards;
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -437,11 +467,11 @@
             <div class="word-section">
                 <div class="category-label" id="categoryLabel">SAYILAR</div>
                 <div class="german-word">
-                    <span class="article" id="wordArticle">das</span>
-                    <span id="germanText">Haus</span>
+                    <span class="article" id="wordArticle"></span>
+                    <span id="germanText"></span>
                 </div>
-                <div class="phonetic" id="phoneticText">[haus]</div>
-                <div class="turkish-meaning" id="turkishText">ev</div>
+                <div class="phonetic" id="phoneticText"></div>
+                <div class="turkish-meaning" id="turkishText"></div>
                 <div class="status-message" id="statusMessage"></div>
             </div>
 
@@ -452,42 +482,57 @@
         </div>
 
         <div class="stats-bar">
-            <div class="stat"><div class="stat-value" id="correctCount">0</div><div class="stat-label">Doğru</div></div>
-            <div class="stat"><div class="stat-value" id="streakCount">0</div><div class="stat-label">Seri</div></div>
-            <div class="stat"><div class="stat-value" id="accuracy">0%</div><div class="stat-label">Başarı</div></div>
-            <div class="stat"><div class="stat-value" id="sessionTime">00:00</div><div class="stat-label">Süre</div></div>
+            <div class="stat">
+                <div class="stat-value" id="correctCount">0</div>
+                <div class="stat-label">Doğru</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="streakCount">0</div>
+                <div class="stat-label">Seri</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="accuracy">0%</div>
+                <div class="stat-label">Başarı</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="sessionTime">00:00</div>
+                <div class="stat-label">Süre</div>
+            </div>
         </div>
     </div>
 
     <script>
-        // koko.app v2.4 - Son Düzeltilmiş Versiyon (Doğru cevap sonrası takılma sorunu çözüldü)
+        // koko.app v2.5 - İlerleme Sorunu Çözülmüş Son Versiyon
 
         const vocabulary = {
-            numbers: { name: "SAYILAR", words: [
-                {de: "null", tr: "sıfır", phonetic: "[nul]"},
-                {de: "eins", tr: "bir", phonetic: "[ayns]"},
-                {de: "zwei", tr: "iki", phonetic: "[tsvay]"},
-                {de: "drei", tr: "üç", phonetic: "[dray]"},
-                {de: "vier", tr: "dört", phonetic: "[fir]"},
-                {de: "fünf", tr: "beş", phonetic: "[funf]"},
-                {de: "sechs", tr: "altı", phonetic: "[zeks]"},
-                {de: "sieben", tr: "yedi", phonetic: "[zee-ben]"},
-                {de: "acht", tr: "sekiz", phonetic: "[aht]"},
-                {de: "neun", tr: "dokuz", phonetic: "[noyn]"},
-                {de: "zehn", tr: "on", phonetic: "[tsayn]"},
-                {de: "elf", tr: "on bir", phonetic: "[elf]"},
-                {de: "zwölf", tr: "on iki", phonetic: "[tsvölf]"},
-                {de: "zwanzig", tr: "yirmi", phonetic: "[tsvan-tsiç]"},
-                {de: "dreißig", tr: "otuz", phonetic: "[dray-siç]"},
-                {de: "vierzig", tr: "kırk", phonetic: "[fir-tsiç]"},
-                {de: "fünfzig", tr: "elli", phonetic: "[funf-tsiç]"},
-                {de: "sechzig", tr: "altmış", phonetic: "[zeks-tsiç]"},
-                {de: "siebzig", tr: "yetmiş", phonetic: "[zeep-tsiç]"},
-                {de: "achtzig", tr: "seksen", phonetic: "[aht-tsiç]"},
-                {de: "neunzig", tr: "doksan", phonetic: "[noyn-tsiç]"},
-                {de: "hundert", tr: "yüz", phonetic: "[hun-dert]"},
-                {de: "tausend", tr: "bin", phonetic: "[tow-zent]"}
-            ]}
+            numbers: {
+                name: "SAYILAR",
+                words: [
+                    {de: "null", tr: "sıfır", phonetic: "[nul]"},
+                    {de: "eins", tr: "bir", phonetic: "[ayns]"},
+                    {de: "zwei", tr: "iki", phonetic: "[tsvay]"},
+                    {de: "drei", tr: "üç", phonetic: "[dray]"},
+                    {de: "vier", tr: "dört", phonetic: "[fir]"},
+                    {de: "fünf", tr: "beş", phonetic: "[funf]"},
+                    {de: "sechs", tr: "altı", phonetic: "[zeks]"},
+                    {de: "sieben", tr: "yedi", phonetic: "[zee-ben]"},
+                    {de: "acht", tr: "sekiz", phonetic: "[aht]"},
+                    {de: "neun", tr: "dokuz", phonetic: "[noyn]"},
+                    {de: "zehn", tr: "on", phonetic: "[tsayn]"},
+                    {de: "elf", tr: "on bir", phonetic: "[elf]"},
+                    {de: "zwölf", tr: "on iki", phonetic: "[tsvölf]"},
+                    {de: "zwanzig", tr: "yirmi", phonetic: "[tsvan-tsiç]"},
+                    {de: "dreißig", tr: "otuz", phonetic: "[dray-siç]"},
+                    {de: "vierzig", tr: "kırk", phonetic: "[fir-tsiç]"},
+                    {de: "fünfzig", tr: "elli", phonetic: "[funf-tsiç]"},
+                    {de: "sechzig", tr: "altmış", phonetic: "[zeks-tsiç]"},
+                    {de: "siebzig", tr: "yetmiş", phonetic: "[zeep-tsiç]"},
+                    {de: "achtzig", tr: "seksen", phonetic: "[aht-tsiç]"},
+                    {de: "neunzig", tr: "doksan", phonetic: "[noyn-tsiç]"},
+                    {de: "hundert", tr: "yüz", phonetic: "[hun-dert]"},
+                    {de: "tausend", tr: "bin", phonetic: "[tow-zent]"}
+                ]
+            }
         };
 
         class KokoApp {
@@ -517,7 +562,6 @@
                     const voices = this.synth.getVoices();
                     this.germanVoice = voices.find(v => v.lang.includes('de')) || null;
                     this.turkishVoice = voices.find(v => v.lang.includes('tr')) || null;
-                    console.log('Sesler yüklendi → DE:', this.germanVoice?.name || 'YOK', 'TR:', this.turkishVoice?.name || 'YOK');
                 };
                 this.synth.onvoiceschanged = loadVoices;
                 loadVoices();
@@ -526,10 +570,7 @@
 
             setupSpeechRecognition() {
                 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (!SR) {
-                    alert("Tarayıcınız konuşma tanımayı desteklemiyor.");
-                    return;
-                }
+                if (!SR) return;
                 this.recognition = new SR();
                 this.recognition.continuous = false;
                 this.recognition.interimResults = false;
@@ -541,12 +582,7 @@
                     this.handleStudentResponse(text);
                 };
 
-                this.recognition.onerror = (e) => {
-                    console.error('Recognition error:', e.error);
-                    this.setListeningState(false);
-                    setTimeout(() => this.startListening(), 1500);
-                };
-
+                this.recognition.onerror = () => this.setListeningState(false);
                 this.recognition.onend = () => this.setListeningState(false);
             }
 
@@ -568,31 +604,26 @@
                 });
             }
 
-            speakText(text, lang, callback = null) {
-                if (!this.synth) {
-                    if (callback) callback();
-                    return;
-                }
+            speakText(text, lang) {
+                if (!this.synth) return;
                 this.synth.cancel();
-                const u = new SpeechSynthesisUtterance(text);
-                u.rate = 0.9;
-                u.pitch = 1.0;
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 0.9;
+                utterance.pitch = 1.0;
 
-                if (lang.includes('de') && this.germanVoice) u.voice = this.germanVoice;
-                if (lang.includes('tr') && this.turkishVoice) u.voice = this.turkishVoice;
+                if (lang.includes('de') && this.germanVoice) utterance.voice = this.germanVoice;
+                if (lang.includes('tr') && this.turkishVoice) utterance.voice = this.turkishVoice;
 
-                if (callback) {
-                    u.onend = callback;
-                    u.onerror = () => callback();
-                }
-                this.synth.speak(u);
+                this.synth.speak(utterance);
             }
 
             startListening() {
                 if (!this.recognition) return;
                 this.setListeningState(true);
                 this.showStatus('Sıra sizde... Tekrar edin', 'listening');
-                try { this.recognition.start(); } catch(e) {}
+                try {
+                    this.recognition.start();
+                } catch (e) {}
             }
 
             handleStudentResponse(text) {
@@ -603,14 +634,13 @@
                     return;
                 }
 
-                const current = this.getCurrentWord();
-                const target = current.de.toLowerCase();
-                const sim = this.calculateSimilarity(text, target);
-                const contains = text.includes(target) || target.includes(text);
+                const currentWord = this.getCurrentWord();
+                const similarity = this.calculateSimilarity(text, currentWord.de.toLowerCase());
+                const contains = text.includes(currentWord.de.toLowerCase()) || currentWord.de.toLowerCase().includes(text);
 
-                console.log(`Karşılaştırma: "${text}" vs "${target}" → Benzerlik: ${sim.toFixed(3)}`);
+                console.log(`Karşılaştırma → "${text}" vs "${currentWord.de}" | Benzerlik: ${similarity.toFixed(3)}`);
 
-                if (sim > 0.58 || contains) {
+                if (similarity > 0.58 || contains) {
                     this.handleCorrect();
                 } else {
                     this.handleIncorrect(text);
@@ -629,14 +659,18 @@
                 this.createConfetti();
                 document.getElementById('turkishText').classList.add('show');
 
+                // Türkçe anlamı sesli söyle
                 this.setSpeakingState(true);
                 this.speakText(word.tr, 'tr-TR');
 
-                // En güvenilir yöntem: Sabit süre sonra otomatik geç
-                setTimeout(() => {
-                    this.setSpeakingState(false);
-                    this.nextWord();
-                }, 2600);
+                // ÇİFT GÜVENLİK - İlerleme garantisi
+                setTimeout(() => this.goToNext(), 2800);
+                setTimeout(() => this.goToNext(), 4500);
+            }
+
+            goToNext() {
+                this.setSpeakingState(false);
+                this.nextWord();
             }
 
             handleIncorrect(text) {
@@ -657,6 +691,7 @@
             loadWord() {
                 const word = this.getCurrentWord();
                 document.getElementById('turkishText').classList.remove('show');
+
                 document.getElementById('categoryLabel').textContent = vocabulary[this.currentCategory].name;
                 document.getElementById('currentIndex').textContent = this.currentIndex + 1;
                 document.getElementById('totalWords').textContent = vocabulary[this.currentCategory].words.length;
@@ -681,8 +716,7 @@
             }
 
             isCommand(text) {
-                const cmds = ['anla', 'geç', 'atla', 'tekrar', 'next', 'skip'];
-                return cmds.some(cmd => text.includes(cmd));
+                return ['anla', 'geç', 'atla', 'tekrar', 'next', 'skip'].some(cmd => text.includes(cmd));
             }
 
             handleCommand(text) {
@@ -700,6 +734,7 @@
                 const core = document.getElementById('voiceCore');
                 const waves = document.querySelectorAll('.voice-wave');
                 const dot = document.getElementById('statusDot');
+
                 if (isSpeaking) {
                     core.classList.add('speaking');
                     core.textContent = '🔊';
@@ -717,6 +752,7 @@
                 const core = document.getElementById('voiceCore');
                 const waves = document.querySelectorAll('.voice-wave');
                 const dot = document.getElementById('statusDot');
+
                 if (isListening) {
                     core.classList.add('listening');
                     core.textContent = '🎙️';
@@ -735,48 +771,48 @@
                 const el = document.getElementById('statusMessage');
                 el.textContent = message;
                 el.className = `status-message show ${type}`;
-                if (type !== 'success' && type !== 'error') {
-                    setTimeout(() => el.classList.remove('show'), 3000);
-                }
             }
 
             calculateSimilarity(str1, str2) {
                 const len1 = str1.length, len2 = str2.length;
                 if (len1 === 0 || len2 === 0) return 0;
 
-                const matrix = Array.from({length: len1+1}, () => Array(len2+1).fill(0));
+                const matrix = Array.from({length: len1 + 1}, () => Array(len2 + 1).fill(0));
                 for (let i = 0; i <= len1; i++) matrix[i][0] = i;
                 for (let j = 0; j <= len2; j++) matrix[0][j] = j;
 
                 for (let i = 1; i <= len1; i++) {
                     for (let j = 1; j <= len2; j++) {
-                        const cost = str1[i-1] === str2[j-1] ? 0 : 1;
-                        matrix[i][j] = Math.min(matrix[i-1][j]+1, matrix[i][j-1]+1, matrix[i-1][j-1]+cost);
+                        const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j - 1] + cost
+                        );
                     }
                 }
                 let sim = 1 - matrix[len1][len2] / Math.max(len1, len2);
-                if (Math.max(len1, len2) <= 6) sim += 0.18;
+                if (Math.max(len1, len2) <= 6) sim += 0.20;
                 return Math.min(1, sim);
             }
 
             updateStats() {
                 document.getElementById('correctCount').textContent = this.correctCount;
                 document.getElementById('streakCount').textContent = this.streak;
-                const acc = this.totalAttempts > 0 ? Math.round((this.correctCount / this.totalAttempts) * 100) : 0;
-                document.getElementById('accuracy').textContent = acc + '%';
+                const accuracy = this.totalAttempts > 0 ? Math.round((this.correctCount / this.totalAttempts) * 100) : 0;
+                document.getElementById('accuracy').textContent = accuracy + '%';
                 document.getElementById('dailyProgress').textContent = this.correctCount + '/20';
             }
 
             createConfetti() {
                 const colors = ['#FF6B6B', '#4ECDC4', '#95E1D3'];
                 for (let i = 0; i < 18; i++) {
-                    const c = document.createElement('div');
-                    c.className = 'confetti';
-                    c.style.left = Math.random() * 100 + 'vw';
-                    c.style.background = colors[Math.floor(Math.random()*colors.length)];
-                    c.style.animationDelay = Math.random() * 0.5 + 's';
-                    document.body.appendChild(c);
-                    setTimeout(() => c.remove(), 3500);
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 3500);
                 }
             }
         }
