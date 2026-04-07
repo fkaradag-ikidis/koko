@@ -172,9 +172,10 @@ input,select,textarea,button{font-family:'Inter',sans-serif;outline:none;}
 
       <!-- Category tabs -->
       <div class="cattabs">
-        <div class="cattab on" data-cat="harfler" onclick="setCat('harfler')">🔤 Harfler</div>
-        <div class="cattab" data-cat="kelimeler" onclick="setCat('kelimeler')">📖 Kelimeler</div>
-        <div class="cattab" data-cat="cumleler" onclick="setCat('cumleler')">💬 Cümleler & Deyimler</div>
+        <div class="cattab on" data-cat="harfler"  onclick="setCat('harfler')">🔤 Harfler</div>
+        <div class="cattab"    data-cat="rakamlar" onclick="setCat('rakamlar')">🔢 Rakamlar</div>
+        <div class="cattab"    data-cat="kelimeler"onclick="setCat('kelimeler')">📖 Kelimeler</div>
+        <div class="cattab"    data-cat="cumleler" onclick="setCat('cumleler')">💬 Cümleler & Deyimler</div>
       </div>
 
       <div class="sec-body">
@@ -309,8 +310,10 @@ function showAdmin() {
 // ════════════════════════════════════════════════════════════
 // DB
 // ════════════════════════════════════════════════════════════
+const CAT_IDS = ['harfler','rakamlar','kelimeler','cumleler'];
+
 const DB = {
-  _key(lvId, cat) { return `koko_db_${lvId}_${cat}`; },
+  _key(lvId, cat) { return 'koko_db_' + lvId + '_' + cat; },
 
   load(lvId, cat) {
     try {
@@ -329,33 +332,23 @@ const DB = {
     localStorage.setItem(this._key(lvId, cat), JSON.stringify(ws));
   },
 
-  // For main app compatibility — returns all entries flat
-  loadAll(lvId) {
-    const cats = ['harfler','kelimeler','cumleler'];
-    let all = [];
-    cats.forEach(cat => { all = all.concat(this.load(lvId, cat)); });
-    // Also save to the flat key used by index.html
-    try { localStorage.setItem('koko_db_' + lvId, JSON.stringify(all)); } catch(e) {}
-    return all;
-  },
-
   add(lvId, cat, w) {
     const ws = this.load(lvId, cat);
     ws.push(w);
     this.save(lvId, cat, ws);
-    this.loadAll(lvId); // sync flat key
   },
 
   del(lvId, cat, i) {
     const ws = this.load(lvId, cat);
     ws.splice(i, 1);
     this.save(lvId, cat, ws);
-    this.loadAll(lvId); // sync flat key
   },
 
   count(lvId) {
-    return ['harfler','kelimeler','cumleler'].reduce((n, cat) => n + this.load(lvId, cat).length, 0);
-  }
+    return CAT_IDS.reduce((n, cat) => n + this.load(lvId, cat).length, 0);
+  },
+
+  countCat(lvId, cat) { return this.load(lvId, cat).length; }
 };
 
 // ════════════════════════════════════════════════════════════
@@ -394,28 +387,25 @@ const Adm = {
   },
 
   updateCatForm() {
-    // Show/hide artikel and type fields based on category
     const artF  = document.getElementById('artField');
     const typeF = document.getElementById('typeField');
     const inTyp = document.getElementById('inTyp');
+    const inArt = document.getElementById('inArt');
+
+    artF.style.display  = 'none';
+    typeF.style.display = 'none';
+    inArt.value = '';
 
     if (this.cat === 'harfler') {
-      artF.style.display  = 'none';
-      typeF.style.display = 'none';
+      // no article, no type selector (forced to 'harf')
+    } else if (this.cat === 'rakamlar') {
+      // no article, no type selector (forced to default kelime)
     } else if (this.cat === 'kelimeler') {
-      artF.style.display  = '';
-      typeF.style.display = 'none';
-      document.getElementById('inArt').value = '';
+      artF.style.display = '';
     } else { // cumleler
-      artF.style.display  = 'none';
       typeF.style.display = '';
-      // set default type options for cumleler
       inTyp.innerHTML = '<option value="cümle">cümle</option><option value="deyim">deyim</option>';
     }
-
-    // Update badge hint in form
-    const titles = { harfler:'Harf Ekle', kelimeler:'Kelime Ekle', cumleler:'Cümle / Deyim Ekle' };
-    // (just visual — no label element to change here)
   },
 
   renderList() {
@@ -477,14 +467,13 @@ function addEntry() {
   if (!de || !tr) { alert('Almanca ve Türkçe alanları zorunludur.'); return; }
 
   const w = { de, tr };
-  if (ph)  w.phonetic = ph;
+  if (ph) w.phonetic = ph;
 
-  if (Adm.cat === 'harfler') {
-    w.type = 'harf';
-  } else if (Adm.cat === 'kelimeler') {
-    if (art) w.article = art;
-  } else {
-    w.type = typ;
+  switch (Adm.cat) {
+    case 'harfler':  w.type = 'harf'; break;
+    case 'rakamlar': /* no special fields */ break;
+    case 'kelimeler': if (art) w.article = art; break;
+    case 'cumleler':  w.type = typ; break;
   }
 
   DB.add(Adm.lvId, Adm.cat, w);
@@ -538,7 +527,7 @@ function seedDefaults() {
 
 function resetLevel() {
   if (!confirm(`"${Adm.lvId}" seviyesindeki TÜM veriler silinecek. Emin misiniz?`)) return;
-  ['harfler','kelimeler','cumleler'].forEach(cat => DB.save(Adm.lvId, cat, []));
+  CAT_IDS.forEach(cat => DB.save(Adm.lvId, cat, []));
   localStorage.removeItem('koko_db_' + Adm.lvId);
   Adm.buildLvTabs(); Adm.renderList();
   toast('Seviye sıfırlandı', 'red');
@@ -547,7 +536,7 @@ function resetLevel() {
 function resetAll() {
   if (!confirm('TÜM seviyelerdeki veriler silinecek. Bu işlem geri alınamaz!')) return;
   LEVELS.forEach(m => {
-    ['harfler','kelimeler','cumleler'].forEach(cat => DB.save(m.id, cat, []));
+    CAT_IDS.forEach(cat => DB.save(m.id, cat, []));
     localStorage.removeItem('koko_db_' + m.id);
   });
   Adm.buildLvTabs(); Adm.renderList();

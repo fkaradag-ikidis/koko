@@ -65,6 +65,27 @@ input,select{font-family:'Inter',sans-serif;outline:none;}
 .pfill{height:100%;background:linear-gradient(90deg,var(--red),var(--blue));border-radius:2px;transition:width .4s;}
 .ptxt{font-size:10px;color:var(--g400);}
 
+/* group chips */
+.groups{
+  flex-shrink:0;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;
+  padding:7px 14px;border-bottom:1px solid var(--g100);background:var(--white);
+}
+.gchip{
+  display:flex;align-items:center;gap:4px;
+  padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;
+  border:1.5px solid var(--g200);background:var(--g50);color:var(--g400);
+  cursor:pointer;transition:all .15s;user-select:none;
+}
+.gchip:hover{border-color:var(--g400);color:var(--g600);}
+.gchip.on{background:var(--blue-l);border-color:var(--blue);color:var(--blue);}
+.gchip.empty{opacity:.3;cursor:default;pointer-events:none;}
+.gchip-icon{font-size:13px;}
+.gchip-cnt{
+  font-size:9px;background:var(--g200);color:var(--g500);
+  padding:1px 5px;border-radius:8px;margin-left:2px;
+}
+.gchip.on .gchip-cnt{background:rgba(37,99,235,.15);color:var(--blue);}
+
 /* main */
 .amain{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 18px;overflow:hidden;}
 
@@ -211,6 +232,9 @@ input,select{font-family:'Inter',sans-serif;outline:none;}
     <button class="nbtn" id="nextB" onclick="App.nextLv()">›</button>
   </div>
 
+  <!-- Group selection chips -->
+  <div class="groups" id="groupChips"></div>
+
   <div class="amain">
     <div class="orb-w">
       <div class="ring r1" id="r1"></div>
@@ -270,23 +294,47 @@ const LEVELS = [
 ];
 
 // ════════════════════════════════════════════════════════════
-// DB — localStorage önce, yoksa veritabani.js
+// DB — per-category localStorage, falls back to veritabani.js
 // ════════════════════════════════════════════════════════════
+const CAT_IDS = ['harfler','rakamlar','kelimeler','cumleler'];
+
 const DB = {
-  key(lvId) { return 'koko_db_' + lvId; },
-  load(lvId) {
+  _key(lvId, catId) { return 'koko_db_' + lvId + '_' + catId; },
+
+  loadCat(lvId, catId) {
     try {
-      const raw = localStorage.getItem(this.key(lvId));
+      const raw = localStorage.getItem(this._key(lvId, catId));
       if (raw !== null) return JSON.parse(raw);
     } catch(e) {}
-    // fall back to veritabani.js default
-    const def = (typeof veriGetir === 'function') ? veriGetir(lvId) : [];
-    this.save(lvId, def);
+    const def = (typeof veriGetirKategori === 'function')
+      ? veriGetirKategori(lvId, catId)
+      : [];
+    this.saveCat(lvId, catId, def);
     return def;
   },
-  save(lvId, ws) { try { localStorage.setItem(this.key(lvId), JSON.stringify(ws)); } catch(e) {} },
-  add(lvId, w)   { const ws = this.load(lvId); ws.push(w); this.save(lvId, ws); },
-  del(lvId, i)   { const ws = this.load(lvId); ws.splice(i,1); this.save(lvId, ws); }
+
+  saveCat(lvId, catId, ws) {
+    try { localStorage.setItem(this._key(lvId, catId), JSON.stringify(ws)); } catch(e) {}
+  },
+
+  // Count for a single category
+  countCat(lvId, catId) { return this.loadCat(lvId, catId).length; },
+
+  // Load and combine selected categories into one flat array
+  loadSelected(lvId, selectedCats) {
+    const cats = selectedCats && selectedCats.length ? selectedCats : CAT_IDS;
+    return cats.flatMap(catId => this.loadCat(lvId, catId));
+  },
+
+  // Legacy flat-key (used by old saves)
+  load(lvId) { return this.loadSelected(lvId, CAT_IDS); },
+
+  add(lvId, catId, w) {
+    const ws = this.loadCat(lvId, catId); ws.push(w); this.saveCat(lvId, catId, ws);
+  },
+  del(lvId, catId, i) {
+    const ws = this.loadCat(lvId, catId); ws.splice(i,1); this.saveCat(lvId, catId, ws);
+  }
 };
 
 // ════════════════════════════════════════════════════════════
@@ -295,6 +343,7 @@ const DB = {
 const App = (function() {
   let lvId='a11', wIdx=0, correct=0, attempts=0, streak=0, daily=0, total=0;
   let words=[], started=false, speaking=false, listening=false, secs=0;
+  let selectedCats = [...CAT_IDS]; // which categories are active
   let deV=null, trV=null;
   let recog=null, recogRunning=false, restartTimer=null;
   const synth = window.speechSynthesis;
@@ -302,9 +351,52 @@ const App = (function() {
 
   function $(id) { return document.getElementById(id); }
 
+  /* ── GROUP CHIPS ───────────────────────── */
+  function buildGroupChips() {
+    const wrap = $('groupChips');
+    wrap.innerHTML = '';
+    if (typeof KATEGORILER === 'undefined') return;
+
+    // Restore saved selection for this level
+    try {
+      const saved = JSON.parse(localStorage.getItem('koko_cats_' + lvId));
+      if (Array.isArray(saved) && saved.length) selectedCats = saved;
+      else selectedCats = [...CAT_IDS];
+    } catch(e) { selectedCats = [...CAT_IDS]; }
+
+    KATEGORILER.forEach(k => {
+      const count = DB.countCat(lvId, k.id);
+      const chip = document.createElement('div');
+      chip.className = 'gchip' + (selectedCats.includes(k.id) ? ' on' : '') + (count === 0 ? ' empty' : '');
+      chip.innerHTML = `<span class="gchip-icon">${k.icon}</span>${k.label}<span class="gchip-cnt">${count}</span>`;
+      if (count > 0) {
+        chip.onclick = () => toggleCat(k.id, chip);
+      }
+      wrap.appendChild(chip);
+    });
+  }
+
+  function toggleCat(catId, chip) {
+    const idx = selectedCats.indexOf(catId);
+    if (idx >= 0) {
+      if (selectedCats.length === 1) return; // keep at least one
+      selectedCats.splice(idx, 1);
+      chip.classList.remove('on');
+    } else {
+      selectedCats.push(catId);
+      chip.classList.add('on');
+    }
+    // Save selection
+    try { localStorage.setItem('koko_cats_' + lvId, JSON.stringify(selectedCats)); } catch(e) {}
+    // Rebuild word pool
+    wIdx = 0;
+    words = DB.loadSelected(lvId, selectedCats);
+    render();
+    if (started && !speaking) setTimeout(() => speakCurrent(), 300);
+  }
+
   /* ── INIT ──────────────────────────────── */
   function init() {
-    // level select
     const sel = $('lvSel');
     LEVELS.forEach(m => {
       const o = document.createElement('option');
@@ -313,22 +405,19 @@ const App = (function() {
       sel.appendChild(o);
     });
 
-    if (!SR) {
-      $('no-recog-banner').classList.add('show');
-    }
+    if (!SR) $('no-recog-banner').classList.add('show');
 
     loadProg();
     setupVoices();
+    buildGroupChips();
     render();
 
-    // keyboard shortcuts
     document.addEventListener('keydown', e => {
       if (!started) return;
       if (e.key === 'ArrowRight') { skip(); }
       if (e.key === 'ArrowLeft')  { repeat(); }
     });
 
-    // timer
     setInterval(() => {
       secs++;
       const m = String(Math.floor(secs/60)).padStart(2,'0');
@@ -347,7 +436,13 @@ const App = (function() {
       total  = d.total  || 0;
       $('lvSel').value = lvId;
     } catch(e) {}
-    words = DB.load(lvId);
+    // Restore saved category selection
+    try {
+      const saved = JSON.parse(localStorage.getItem('koko_cats_' + lvId));
+      if (Array.isArray(saved) && saved.length) selectedCats = saved;
+      else selectedCats = [...CAT_IDS];
+    } catch(e) { selectedCats = [...CAT_IDS]; }
+    words = DB.loadSelected(lvId, selectedCats);
     wIdx  = Math.min(wIdx, Math.max(0, words.length - 1));
   }
 
@@ -705,7 +800,8 @@ const App = (function() {
     if (i <= 0) return;
     lvId = LEVELS[i-1].id; wIdx = 0;
     $('lvSel').value = lvId;
-    words = DB.load(lvId); render();
+    buildGroupChips();
+    words = DB.loadSelected(lvId, selectedCats); render();
     if (started) setTimeout(() => speakCurrent(), 400);
   }
 
@@ -714,19 +810,21 @@ const App = (function() {
     if (i >= LEVELS.length - 1) return;
     lvId = LEVELS[i+1].id; wIdx = 0;
     $('lvSel').value = lvId;
-    words = DB.load(lvId); render();
+    buildGroupChips();
+    words = DB.loadSelected(lvId, selectedCats); render();
     if (started) setTimeout(() => speakCurrent(), 400);
   }
 
   function changeLevel(id) {
     lvId = id; wIdx = 0;
-    words = DB.load(lvId); render();
+    buildGroupChips();
+    words = DB.loadSelected(lvId, selectedCats); render();
     if (started) setTimeout(() => speakCurrent(), 400);
   }
 
   /* ── RENDER ────────────────────────────── */
   function render() {
-    words = DB.load(lvId);
+    words = DB.loadSelected(lvId, selectedCats);
     const lm = LEVELS.find(m => m.id === lvId) || LEVELS[0];
     $('sname').textContent = lm.label + ' – ' + lm.name;
 
@@ -922,7 +1020,7 @@ const App = (function() {
   }
 
   return { init, start, skip, repeat, changeLevel, prevLv, nextLv, requestMic,
-           reload() { words = DB.load(lvId); render(); } };
+           reload() { buildGroupChips(); words = DB.loadSelected(lvId, selectedCats); render(); } };
 })();
 
 App.init();
