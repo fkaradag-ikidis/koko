@@ -404,13 +404,16 @@ const App = (function() {
   }
 
   /* ── SPEECH RECOGNITION ────────────────── */
-  function buildRecog() {
+  // Attempt counter: after 2 failed de-DE attempts, try tr-TR as fallback
+  let failCount = 0;
+
+  function buildRecog(lang) {
     if (!SR) return null;
     const r = new SR();
     r.continuous      = false;
     r.interimResults  = false;
-    r.maxAlternatives = 3;   // get top 3 guesses → better matching
-    r.lang            = 'de-DE';
+    r.maxAlternatives = 6;   // more candidates = better matching
+    r.lang            = lang || 'de-DE';
 
     r.onstart = () => {
       recogRunning = true;
@@ -421,52 +424,32 @@ const App = (function() {
 
     r.onresult = e => {
       recogRunning = false;
-      // Collect all alternatives from all results
       const phrases = [];
-      for (let ri = 0; ri < e.results.length; ri++) {
-        for (let ai = 0; ai < e.results[ri].length; ai++) {
+      for (let ri = 0; ri < e.results.length; ri++)
+        for (let ai = 0; ai < e.results[ri].length; ai++)
           phrases.push(e.results[ri][ai].transcript.toLowerCase().trim());
-        }
-      }
-      onSpoken(phrases);
+      onSpoken(phrases, r.lang);
     };
 
     r.onnomatch = () => {
-      recogRunning = false;
-      listening    = false;
-      setLi(false);
-      setMsg('Anlaşılamadı — tekrar deneyin', 'err');
-      scheduleRestart(1800);
+      recogRunning = false; listening = false; setLi(false);
+      scheduleRestart(600);
     };
 
     r.onerror = ev => {
-      recogRunning = false;
-      listening    = false;
-      setLi(false);
-      console.warn('SR error:', ev.error);
-
+      recogRunning = false; listening = false; setLi(false);
+      console.warn('SR error:', ev.error, '(lang:', r.lang, ')');
       if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
         $('micBanner').classList.add('show');
         setMsg('Mikrofon izni reddedildi', 'err');
-        return; // do not restart
-      }
-      if (ev.error === 'no-speech') {
-        // No speech detected — restart quickly
-        scheduleRestart(400);
         return;
       }
-      // network / aborted / other — restart with delay
-      scheduleRestart(1500);
+      scheduleRestart(ev.error === 'no-speech' ? 300 : 1200);
     };
 
     r.onend = () => {
-      recogRunning = false;
-      listening    = false;
-      setLi(false);
-      // If we're still in "listening" mode (no result triggered), restart
-      if (started && !speaking) {
-        scheduleRestart(300);
-      }
+      recogRunning = false; listening = false; setLi(false);
+      if (started && !speaking) scheduleRestart(250);
     };
 
     return r;
@@ -478,74 +461,170 @@ const App = (function() {
     restartTimer = setTimeout(() => startListen(), ms);
   }
 
-  function startListen() {
+  function startListen(lang) {
     clearTimeout(restartTimer);
     if (!started || speaking || recogRunning) return;
     if (!SR) { setMsg('Ses tanıma desteklenmiyor — butonları kullanın', 'err'); return; }
-
-    // Always create a fresh instance (required on iOS + avoids state bugs on desktop)
-    recog = buildRecog();
+    recog = buildRecog(lang || 'de-DE');
     if (!recog) return;
-
-    try {
-      recog.start();
-    } catch (e) {
-      console.warn('recog.start failed:', e);
-      recogRunning = false;
-      scheduleRestart(1000);
-    }
+    try { recog.start(); }
+    catch(e) { console.warn('recog.start failed:', e); recogRunning = false; scheduleRestart(900); }
   }
 
   function stopListen() {
     clearTimeout(restartTimer);
-    if (recog && recogRunning) {
-      try { recog.abort(); } catch(e) {}
+    if (recog && recogRunning) try { recog.abort(); } catch(e) {}
+    recogRunning = false; listening = false; setLi(false);
+  }
+
+  /* ══════════════════════════════════════════
+     MATCHING ENGINE
+     6 strategies — any one passing = correct
+  ══════════════════════════════════════════ */
+
+  // German → simplified phonetic string
+  // Maps German sounds to consistent representations so
+  // "ch" / "ck" / umlauts / ß are handled uniformly
+  function phonetize(s) {
+    return s
+      .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue')
+      .replace(/ß/g,'ss')
+      .replace(/sch/g,'X').replace(/ch/g,'H').replace(/ck/g,'k')
+      .replace(/ph/g,'f').replace(/qu/g,'kv').replace(/th/g,'t')
+      .replace(/tion/g,'tsion').replace(/tsch/g,'tX')
+      .replace(/ie/g,'i').replace(/ei/g,'ai').replace(/eu/g,'oi')
+      .replace(/au/g,'ao')
+      .replace(/[^a-z0-9]/g,'');
+  }
+
+  // Strip punctuation, collapse spaces
+  function clean(s) {
+    return s.replace(/[.,!?;:'"()…–\-]/g,' ').replace(/\s+/g,' ').trim();
+  }
+
+  // Strip leading article from string if present
+  function stripArt(s, article) {
+    if (!article) return s;
+    const pfx = article.toLowerCase() + ' ';
+    return s.startsWith(pfx) ? s.slice(pfx.length) : s;
+  }
+
+  // Levenshtein similarity 0..1
+  function lev(a, b) {
+    if (!a.length || !b.length) return 0;
+    const la = a.length, lb = b.length;
+    const m = Array.from({length:la+1},(_,i)=>Array.from({length:lb+1},(_,j)=>i===0?j:j===0?i:0));
+    for (let i=1;i<=la;i++) for (let j=1;j<=lb;j++)
+      m[i][j]=a[i-1]===b[j-1]?m[i-1][j-1]:1+Math.min(m[i-1][j],m[i][j-1],m[i-1][j-1]);
+    return 1 - m[la][lb] / Math.max(la, lb);
+  }
+
+  // Word-overlap ratio (for sentences)
+  function wordOverlap(spoken, target) {
+    const sw = new Set(clean(spoken).split(' ').filter(w=>w.length>1));
+    const tw = clean(target).split(' ').filter(w=>w.length>1);
+    if (!tw.length) return 0;
+    let hits = 0;
+    tw.forEach(w => { if (sw.has(w)) hits++; });
+    return hits / tw.length;
+  }
+
+  // Adaptive threshold: shorter words need higher similarity
+  function threshold(len) {
+    if (len <= 3)  return 0.60;
+    if (len <= 6)  return 0.55;
+    if (len <= 12) return 0.50;
+    return 0.45;           // long sentences — be lenient
+  }
+
+  function isMatch(spokenPhrases, word) {
+    const raw   = word.de.toLowerCase();
+    const target= stripArt(raw, word.article);
+    const tClean= clean(target);
+    const tPhon = phonetize(tClean);
+    const tWords= tClean.split(' ').filter(w=>w.length>1);
+    const isSentence = tWords.length >= 3;
+    const thr   = threshold(tClean.length);
+
+    for (const phrase of spokenPhrases) {
+      const s      = clean(phrase);
+      const sPhon  = phonetize(s);
+
+      // S1 — exact
+      if (s === tClean || s === raw) return true;
+
+      // S2 — contains (good for sentences where extra words spoken)
+      if (s.includes(tClean) || tClean.includes(s)) return true;
+
+      // S3 — Levenshtein on cleaned strings
+      if (lev(s, tClean) >= thr) return true;
+
+      // S4 — Levenshtein on phonetic representations
+      //      catches accented pronunciations: "fünf"→"fünf" vs "funf"
+      if (lev(sPhon, tPhon) >= thr) return true;
+
+      // S5 — Word overlap for multi-word targets
+      //      "Guten Morgen" → match if ≥60% words found
+      if (isSentence && wordOverlap(s, tClean) >= 0.6) return true;
+
+      // S6 — First-syllable / prefix check for very short words (≤5 chars)
+      //      "dreißig" → accept "dreiß" or "dress"
+      if (tClean.length <= 5 && s.length >= 2 && tClean.startsWith(s.slice(0,2))) return true;
+
+      // S7 — Key-word check: all content words (len>2) spoken
+      if (isSentence) {
+        const contentWords = tWords.filter(w=>w.length > 2);
+        const sSet = new Set(s.split(' '));
+        const sPhonSet = new Set(sPhon.split(''));
+        const allFound = contentWords.every(cw => {
+          const cwp = phonetize(cw);
+          // word present, or phonetic within 1 char edit of any spoken word
+          return s.includes(cw) || [...sSet].some(sw => lev(sw, cw) >= 0.7)
+              || sPhon.includes(cwp.slice(0, Math.max(2, cwp.length-1)));
+        });
+        if (allFound) return true;
+      }
     }
-    recogRunning = false;
-    listening    = false;
-    setLi(false);
+    return false;
   }
 
   /* ── HANDLE SPOKEN INPUT ───────────────── */
-  function onSpoken(phrases) {
+  function onSpoken(phrases, lang) {
     stopListen();
+    console.log('🎙️ [' + lang + ']', phrases);
 
-    // Check every alternative for commands first
+    // Commands (accept in any language)
     for (const txt of phrases) {
-      if (txt.includes('geç') || txt.includes('atla') || txt.includes('weiter') || txt.includes('skip')) {
-        skip(); return;
-      }
-      if (txt.includes('tekrar') || txt.includes('wieder') || txt.includes('repeat') || txt.includes('nochmal')) {
-        repeat(); return;
-      }
+      if (txt.includes('geç') || txt.includes('atla') || txt.includes('weiter') || txt.includes('skip') || txt.includes('next'))
+        { skip(); return; }
+      if (txt.includes('tekrar') || txt.includes('wieder') || txt.includes('repeat') || txt.includes('nochmal'))
+        { repeat(); return; }
     }
 
     if (!words.length) return;
     const w = words[wIdx];
 
-    // Build target (strip article)
-    let target = w.de.toLowerCase();
-    if (w.article) {
-      const pfx = w.article.toLowerCase() + ' ';
-      if (target.startsWith(pfx)) target = target.slice(pfx.length);
-    }
-
-    // Check all alternatives
-    let matched = false;
-    for (const txt of phrases) {
-      const sim   = levenshtein(txt, target);
-      const exact = txt.includes(target) || target.includes(txt);
-      if (sim > 0.58 || exact) { matched = true; break; }
-    }
-
-    if (matched) {
+    if (isMatch(phrases, w)) {
+      failCount = 0;
       correctAnswer();
     } else {
+      // After 2 failed de-DE attempts, try Turkish STT once (Turkish speakers
+      // often pronounce German with Turkish phonetics, which Turkish STT captures better)
+      if (lang === 'de-DE') {
+        failCount++;
+        if (failCount === 2) {
+          failCount = 0;
+          setMsg(`Duyulan: "${phrases[0]}" — farklı algılamayı deniyor…`, 'err');
+          setTimeout(() => startListen('tr-TR'), 400);
+          return;
+        }
+      }
+      // tr-TR fallback also failed → mark wrong
       attempts++;
       streak = 0;
       setMsg(`Duyulan: "${phrases[0]}" — tekrar deneyin`, 'err');
       updateStats();
-      scheduleRestart(2000);
+      scheduleRestart(2200);
     }
   }
 
@@ -802,19 +881,6 @@ const App = (function() {
       document.body.appendChild(c);
       setTimeout(() => c.remove(), 2400);
     }
-  }
-
-  /* ── LEVENSHTEIN SIMILARITY ────────────── */
-  function levenshtein(a, b) {
-    if (!a.length || !b.length) return 0;
-    const la = a.length, lb = b.length;
-    const m = Array.from({length:la+1}, (_,i) => Array.from({length:lb+1}, (_,j) => i===0?j:j===0?i:0));
-    for (let i=1; i<=la; i++)
-      for (let j=1; j<=lb; j++)
-        m[i][j] = a[i-1]===b[j-1] ? m[i-1][j-1] : 1+Math.min(m[i-1][j], m[i][j-1], m[i-1][j-1]);
-    let s = 1 - m[la][lb] / Math.max(la, lb);
-    if (Math.max(la, lb) <= 5) s += 0.14; // boost short words
-    return Math.min(1, s);
   }
 
   return { init, start, skip, repeat, changeLevel, prevLv, nextLv, requestMic,
