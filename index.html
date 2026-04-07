@@ -3,1194 +3,825 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#e63946">
+<meta name="theme-color" content="#ffffff">
 <title>koko.app – Konuşarak Almanca Öğren</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 :root{
-  --red:#e63946;--red2:#c1121f;--cyan:#4cc9f0;--green:#06d6a0;--yellow:#ffd166;
-  --bg:#0d1117;--surface:#161b22;--surface2:#21262d;--surface3:#30363d;
-  --text:#e6edf3;--muted:#8b949e;--border:rgba(255,255,255,0.08);
+  --red:#e63946;--red-l:#fff0f0;
+  --blue:#2563eb;--blue-l:#eff6ff;
+  --green:#16a34a;--green-l:#f0fdf4;
+  --amber:#d97706;--amber-l:#fffbeb;
+  --g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;
+  --g300:#d1d5db;--g400:#9ca3af;--g500:#6b7280;
+  --g600:#4b5563;--g700:#374151;--g800:#1f2937;--g900:#111827;
+  --white:#fff;
 }
-html,body{height:100%;overflow:hidden;}
-body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;align-items:center;}
+html,body{height:100%;background:var(--white);}
+body{font-family:'Inter',sans-serif;color:var(--g800);overflow:hidden;}
+button{font-family:'Inter',sans-serif;cursor:pointer;border:none;outline:none;}
+input,select{font-family:'Inter',sans-serif;outline:none;}
 
-/* ─── OVERLAY ─────────────────────────────── */
-#overlay{
-  position:fixed;inset:0;z-index:900;background:rgba(0,0,0,0.92);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:24px;transition:opacity .5s ease;
-}
-#overlay.gone{opacity:0;pointer-events:none;}
-.ov-logo{font-family:'Syne',sans-serif;font-size:52px;color:var(--red);letter-spacing:-2px;line-height:1;}
-.ov-sub{font-size:13px;color:var(--muted);margin:6px 0 28px;}
-.ov-steps{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 24px;width:100%;max-width:360px;margin-bottom:28px;}
-.ov-step{display:flex;align-items:center;gap:14px;padding:8px 0;font-size:14px;color:var(--muted);}
-.ov-step span.n{min-width:26px;height:26px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
-.cmds{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:28px;}
-.cmd-chip{padding:6px 14px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);font-size:12px;color:var(--cyan);}
-.cmd-chip em{color:var(--muted);font-style:normal;}
-.start-btn{padding:18px 56px;font-family:'Syne',sans-serif;font-size:18px;font-weight:700;background:var(--red);color:#fff;border:none;border-radius:50px;cursor:pointer;box-shadow:0 0 40px rgba(230,57,70,0.5);transition:all .2s;}
-.start-btn:hover{transform:scale(1.04);box-shadow:0 0 60px rgba(230,57,70,0.6);}
+/* shell */
+.shell{max-width:520px;margin:0 auto;height:100vh;display:flex;flex-direction:column;background:var(--white);border-left:1px solid var(--g100);border-right:1px solid var(--g100);}
+@supports(-webkit-touch-callout:none){html,body,.shell{height:-webkit-fill-available;}}
 
-/* ─── MAIN SHELL ─────────────────────────── */
-.shell{width:100%;max-width:480px;height:100vh;display:flex;flex-direction:column;}
+/* header */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--g100);flex-shrink:0;}
+.logo{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:var(--red);letter-spacing:-.5px;}
+.hdr-r{display:flex;align-items:center;gap:8px;}
+.lv-sel{
+  appearance:none;-webkit-appearance:none;
+  background:var(--g50) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7280'/%3E%3C/svg%3E") no-repeat right 9px center;
+  border:1px solid var(--g200);color:var(--g700);
+  padding:6px 26px 6px 10px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;
+}
+.lv-sel option{background:var(--white);}
 
-/* ─── HEADER ─────────────────────────────── */
-.hdr{
-  padding:12px 20px;display:flex;align-items:center;justify-content:space-between;
-  background:var(--surface);border-bottom:1px solid var(--border);
-  flex-shrink:0;
-}
-.logo{font-family:'Syne',sans-serif;font-size:22px;color:var(--red);letter-spacing:-1px;}
-.hdr-right{display:flex;align-items:center;gap:10px;}
-.level-picker{
-  appearance:none;background:var(--surface2);border:1px solid var(--border);
-  color:var(--text);padding:6px 32px 6px 12px;border-radius:8px;font-size:12px;
-  font-family:'Space Grotesk',sans-serif;cursor:pointer;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b949e' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 10px center;
-}
-.level-picker option{background:var(--surface2);}
+/* status */
+.sts{display:flex;align-items:center;justify-content:space-between;padding:7px 18px;background:var(--g50);border-bottom:1px solid var(--g100);flex-shrink:0;font-size:12px;color:var(--g500);}
+.dot-row{display:flex;align-items:center;gap:6px;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--g300);transition:all .3s;}
+.dot.sp{background:var(--blue);box-shadow:0 0 5px rgba(37,99,235,.5);animation:bk 1s infinite;}
+.dot.li{background:var(--red);box-shadow:0 0 5px rgba(230,57,70,.5);animation:bk .6s infinite;}
+.dot.ok{background:var(--green);}
+@keyframes bk{0%,100%{opacity:1;}50%{opacity:.25;}}
 
-/* ─── STATUS BAR ─────────────────────────── */
-.status-strip{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:8px 20px;background:var(--surface2);border-bottom:1px solid var(--border);
-  flex-shrink:0;font-size:12px;
-}
-.dot-wrap{display:flex;align-items:center;gap:6px;}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:all .3s;}
-.dot.sp{background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:blink 1s infinite;}
-.dot.li{background:var(--red);box-shadow:0 0 8px var(--red);animation:blink .5s infinite;}
-.dot.ok{background:var(--green);box-shadow:0 0 8px var(--green);}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
-.strip-stat{color:var(--muted);}
-.strip-stat strong{color:var(--text);}
+/* mic permission banner */
+.mic-banner{display:none;background:var(--amber-l);border-bottom:1px solid #fcd34d;padding:8px 18px;font-size:12px;color:var(--amber);flex-shrink:0;}
+.mic-banner.show{display:flex;align-items:center;gap:8px;}
+.mic-banner button{background:var(--amber);color:#fff;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;}
 
-/* ─── STAGE NAV ──────────────────────────── */
-.stage-nav{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 20px;flex-shrink:0;
-}
-.nav-btn{
-  width:36px;height:36px;border-radius:50%;border:1px solid var(--border);
-  background:var(--surface2);color:var(--muted);font-size:18px;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  transition:all .2s;
-}
-.nav-btn:hover{background:var(--surface3);color:var(--text);}
-.nav-btn:disabled{opacity:.3;cursor:default;}
-.stage-info{text-align:center;}
-.stage-name{font-family:'Syne',sans-serif;font-size:15px;color:var(--cyan);}
-.stage-sub{font-size:11px;color:var(--muted);margin-top:2px;}
-.progress-bar{width:100%;height:3px;background:var(--surface3);border-radius:2px;overflow:hidden;margin:6px 0;}
-.progress-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--cyan));border-radius:2px;transition:width .5s ease;}
+/* stage nav */
+.snav{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--g100);flex-shrink:0;}
+.nbtn{width:30px;height:30px;border-radius:50%;background:var(--g100);border:1px solid var(--g200);color:var(--g500);font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.nbtn:hover:not(:disabled){background:var(--g200);color:var(--g800);}
+.nbtn:disabled{opacity:.3;cursor:default;}
+.smid{flex:1;text-align:center;min-width:0;}
+.slabel{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pbar{height:3px;background:var(--g100);border-radius:2px;overflow:hidden;margin:5px 0 3px;}
+.pfill{height:100%;background:linear-gradient(90deg,var(--red),var(--blue));border-radius:2px;transition:width .4s;}
+.ptxt{font-size:10px;color:var(--g400);}
 
-/* ─── MAIN DISPLAY ───────────────────────── */
-.main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 24px;overflow:hidden;position:relative;}
+/* main */
+.amain{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 18px;overflow:hidden;}
 
-.wave-ring{
-  position:relative;width:160px;height:160px;margin-bottom:24px;flex-shrink:0;
-}
-.ring{
-  position:absolute;border:2px solid transparent;border-radius:50%;
-  top:50%;left:50%;transform:translate(-50%,-50%);opacity:0;
-}
-.ring.r1{width:70px;height:70px;}
-.ring.r2{width:70px;height:70px;}
-.ring.r3{width:70px;height:70px;}
-.ring.sp{border-color:var(--cyan);}
-.ring.sp.r1{animation:expand 1.8s .0s infinite;}
-.ring.sp.r2{animation:expand 1.8s .4s infinite;}
-.ring.sp.r3{animation:expand 1.8s .8s infinite;}
+/* orb */
+.orb-w{position:relative;width:90px;height:90px;margin-bottom:16px;flex-shrink:0;}
+.ring{position:absolute;border-radius:50%;border:2px solid transparent;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0;}
+.ring.r1,.ring.r2,.ring.r3{width:40px;height:40px;}
+.ring.sp{border-color:var(--blue);}
+.ring.sp.r1{animation:expand 2s 0s infinite;}
+.ring.sp.r2{animation:expand 2s .45s infinite;}
+.ring.sp.r3{animation:expand 2s .9s infinite;}
 .ring.li{border-color:var(--red);}
-.ring.li.r1{animation:expand 1s .0s infinite;}
-.ring.li.r2{animation:expand 1s .25s infinite;}
-.ring.li.r3{animation:expand 1s .5s infinite;}
-@keyframes expand{0%{width:70px;height:70px;opacity:.8;}100%{width:160px;height:160px;opacity:0;}}
-
-.core{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:70px;height:70px;border-radius:50%;
-  background:var(--surface2);border:2px solid var(--border);
-  display:flex;align-items:center;justify-content:center;font-size:28px;
-  transition:all .3s;box-shadow:0 8px 32px rgba(0,0,0,0.4);
-}
-.core.sp{background:rgba(76,201,240,.15);border-color:var(--cyan);box-shadow:0 0 32px rgba(76,201,240,.3);}
-.core.li{background:rgba(230,57,70,.15);border-color:var(--red);box-shadow:0 0 32px rgba(230,57,70,.3);}
-.core.ok{background:rgba(6,214,160,.15);border-color:var(--green);box-shadow:0 0 32px rgba(6,214,160,.3);}
+.ring.li.r1{animation:expand 1.1s 0s infinite;}
+.ring.li.r2{animation:expand 1.1s .28s infinite;}
+.ring.li.r3{animation:expand 1.1s .56s infinite;}
+@keyframes expand{0%{width:40px;height:40px;opacity:.7;}100%{width:90px;height:90px;opacity:0;}}
+.orb{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:40px;height:40px;border-radius:50%;background:var(--g100);border:1.5px solid var(--g200);display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .25s;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+.orb.sp{background:var(--blue-l);border-color:var(--blue);box-shadow:0 0 18px rgba(37,99,235,.2);}
+.orb.li{background:var(--red-l);border-color:var(--red);box-shadow:0 0 18px rgba(230,57,70,.2);}
+.orb.ok{background:var(--green-l);border-color:var(--green);}
 
 /* word card */
-.word-card{text-align:center;width:100%;}
-.type-tag{
-  display:inline-block;padding:4px 12px;border-radius:20px;
-  font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;
-  background:var(--surface2);border:1px solid var(--border);color:var(--cyan);
-  margin-bottom:14px;
-}
-.de-word{font-family:'Syne',sans-serif;font-size:52px;font-weight:800;line-height:1;margin-bottom:8px;word-break:break-word;}
-.article-span{color:var(--cyan);margin-right:8px;}
-.phonetic{font-size:16px;color:var(--muted);font-family:'Courier New',monospace;margin-bottom:4px;}
-.tr-word{
-  font-size:32px;font-weight:600;color:var(--green);
-  margin-top:16px;opacity:0;transform:translateY(12px);
-  transition:all .4s ease;
-}
-.tr-word.show{opacity:1;transform:translateY(0);}
-.status-msg{
-  margin-top:14px;font-size:15px;font-weight:600;
-  min-height:30px;opacity:0;transition:opacity .3s;
-}
-.status-msg.show{opacity:1;}
-.status-msg.sp{color:var(--cyan);}
-.status-msg.li{color:var(--red);}
-.status-msg.ok{color:var(--green);}
-.status-msg.err{color:var(--yellow);}
+.wcard{width:100%;text-align:center;}
+.tbadge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:9px;background:var(--g100);color:var(--g500);border:1px solid var(--g200);}
+.tbadge.cümle{background:var(--amber-l);color:var(--amber);border-color:#fcd34d;}
+.tbadge.harf{background:var(--green-l);color:var(--green);border-color:#86efac;}
+.tbadge.deyim{background:var(--red-l);color:var(--red);border-color:#fca5a5;}
+.de-w{font-family:'Space Grotesk',sans-serif;font-size:clamp(18px,4.5vw,30px);font-weight:700;line-height:1.3;color:var(--g900);word-break:break-word;padding:0 8px;margin-bottom:5px;}
+.de-art{color:var(--blue);margin-right:4px;}
+.phon{font-size:11px;color:var(--g400);font-family:'Courier New',monospace;margin-bottom:3px;word-break:break-all;}
+.tr-w{font-size:clamp(15px,4vw,21px);font-weight:600;color:var(--green);margin-top:8px;opacity:0;transform:translateY(7px);transition:all .35s;word-break:break-word;padding:0 8px;}
+.tr-w.show{opacity:1;transform:translateY(0);}
+.smsg{margin-top:8px;font-size:13px;font-weight:500;min-height:22px;opacity:0;transition:opacity .25s;color:var(--g500);}
+.smsg.show{opacity:1;}
+.smsg.sp{color:var(--blue);}
+.smsg.li{color:var(--red);}
+.smsg.ok{color:var(--green);}
+.smsg.err{color:var(--amber);}
 
-/* ─── HINTS BAR ──────────────────────────── */
-.hints{
-  flex-shrink:0;padding:10px 20px;
-  display:flex;flex-wrap:wrap;gap:6px;justify-content:center;
-  background:var(--surface);border-top:1px solid var(--border);
+/* ── ACTION BUTTONS (geç / tekrar) ───────── */
+.actions{
+  flex-shrink:0;display:flex;gap:10px;justify-content:center;
+  padding:10px 18px;border-top:1px solid var(--g100);background:var(--g50);
 }
-.hint{padding:5px 12px;border-radius:16px;font-size:11px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);}
-.hint strong{color:var(--cyan);}
-
-/* ─── STATS BAR ──────────────────────────── */
-.stats{
-  flex-shrink:0;display:flex;justify-content:space-around;
-  padding:12px 20px;background:var(--surface);border-top:1px solid var(--border);
+.act-btn{
+  flex:1;max-width:180px;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:11px 16px;border-radius:10px;font-size:13px;font-weight:600;
+  transition:all .15s;border:1.5px solid transparent;
 }
-.stat{text-align:center;}
-.stat-val{font-family:'Syne',sans-serif;font-size:22px;color:var(--red);}
-.stat-lbl{font-size:10px;color:var(--muted);margin-top:1px;}
+.act-btn:active{transform:scale(.97);}
+.btn-skip{background:var(--white);border-color:var(--g200);color:var(--g700);box-shadow:0 1px 3px rgba(0,0,0,.07);}
+.btn-skip:hover{background:var(--g100);border-color:var(--g300);}
+.btn-repeat{background:var(--blue-l);border-color:#bfdbfe;color:var(--blue);box-shadow:0 1px 3px rgba(37,99,235,.08);}
+.btn-repeat:hover{background:#dbeafe;}
+.btn-icon{font-size:15px;}
+.btn-key{font-size:9px;background:var(--g200);color:var(--g500);padding:1px 5px;border-radius:4px;font-family:monospace;font-weight:700;}
+.btn-repeat .btn-key{background:#bfdbfe;color:var(--blue);}
 
-/* ─── CONFETTI ───────────────────────────── */
-.confetti-piece{
-  position:fixed;pointer-events:none;z-index:999;
-  width:8px;height:8px;border-radius:2px;
-  animation:cffall 2.5s ease-out forwards;
+/* stats */
+.astats{flex-shrink:0;display:flex;justify-content:space-around;padding:10px 14px;border-top:1px solid var(--g100);padding-bottom:max(10px,env(safe-area-inset-bottom));}
+.si{text-align:center;}
+.sv{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;color:var(--red);}
+.sl{font-size:9px;color:var(--g400);margin-top:1px;font-weight:500;letter-spacing:.3px;text-transform:uppercase;}
+
+/* confetti */
+.cf{position:fixed;pointer-events:none;z-index:9999;width:7px;height:7px;border-radius:2px;animation:cff 2.2s ease-out forwards;}
+@keyframes cff{0%{transform:translateY(-40px) rotate(0);opacity:1;}100%{transform:translateY(100vh) rotate(480deg);opacity:0;}}
+
+/* ── START OVERLAY ──────────────────────── */
+#ov{position:fixed;inset:0;z-index:800;background:rgba(255,255,255,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;transition:opacity .4s;}
+#ov.gone{opacity:0;pointer-events:none;}
+.ovlogo{font-family:'Space Grotesk',sans-serif;font-size:46px;font-weight:700;color:var(--red);letter-spacing:-1px;}
+.ovtag{font-size:12px;color:var(--g400);margin:4px 0 22px;}
+.ovc{background:var(--white);border:1px solid var(--g200);border-radius:12px;padding:18px 22px;width:100%;max-width:360px;margin-bottom:22px;box-shadow:0 4px 12px rgba(0,0,0,.07);}
+.ovs{display:flex;align-items:flex-start;gap:12px;padding:6px 0;font-size:13px;color:var(--g600);}
+.ovn{min-width:23px;height:23px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px;}
+.sbtn{padding:14px 50px;font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;background:var(--red);color:#fff;border-radius:50px;box-shadow:0 4px 18px rgba(230,57,70,.32);transition:all .2s;}
+.sbtn:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(230,57,70,.42);}
+.ovnote{margin-top:16px;font-size:11px;color:var(--g400);text-align:center;line-height:1.8;}
+
+/* no-recog overlay for desktop */
+#no-recog-banner{
+  display:none;position:fixed;bottom:0;left:0;right:0;z-index:700;
+  background:var(--g800);color:var(--white);padding:14px 20px;
+  font-size:13px;text-align:center;line-height:1.6;
 }
-@keyframes cffall{0%{transform:translateY(-60px) rotate(0deg);opacity:1;}100%{transform:translateY(100vh) rotate(540deg);opacity:0;}}
-
-/* ─── SAVE BADGE ─────────────────────────── */
-.save-badge{
-  position:fixed;bottom:80px;right:20px;z-index:800;
-  background:var(--surface2);border:1px solid var(--border);border-radius:12px;
-  padding:10px 16px;font-size:12px;color:var(--green);
-  opacity:0;transform:translateY(8px);transition:all .4s ease;pointer-events:none;
-}
-.save-badge.show{opacity:1;transform:translateY(0);}
-
-/* scrollbar */
-::-webkit-scrollbar{width:4px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px;}
+#no-recog-banner.show{display:block;}
 </style>
 </head>
 <body>
+<!-- veritabanı -->
+<script src="veritabani.js"></script>
 
-<!-- ═══ START OVERLAY ═══════════════════════════════════════ -->
-<div id="overlay">
-  <div class="ov-logo">koko.app</div>
-  <div class="ov-sub">Hands-free Almanca · A1'den C2'ye</div>
-  <div class="ov-steps">
-    <div class="ov-step"><span class="n">1</span><span>Program Almanca kelimeyi/cümleyi sesli söyler</span></div>
-    <div class="ov-step"><span class="n">2</span><span>Siz tekrar edersiniz – hiç dokunmadan!</span></div>
-    <div class="ov-step"><span class="n">3</span><span>Doğruysa Türkçe anlamı söyler ve bir sonrakine geçer</span></div>
+<!-- START OVERLAY -->
+<div id="ov">
+  <div class="ovlogo">koko.app</div>
+  <div class="ovtag">Hands-free Almanca · A1'den C2'ye</div>
+  <div class="ovc">
+    <div class="ovs"><span class="ovn">1</span><span>Program Almanca kelimeyi sesli söyler</span></div>
+    <div class="ovs"><span class="ovn">2</span><span>Siz tekrar edersiniz — hiç dokunmanıza gerek yok</span></div>
+    <div class="ovs"><span class="ovn">3</span><span>Doğruysa Türkçe anlamı söyler ve ilerler</span></div>
+    <div class="ovs" style="margin-top:6px;padding-top:10px;border-top:1px solid var(--g100);">
+      <span class="ovn" style="background:var(--g400);">💡</span>
+      <span>Söyleyin <strong style="color:var(--g800);">"geç"</strong> veya butona basın · <strong style="color:var(--g800);">"tekrar"</strong> diyerek tekrar dinleyin</span>
+    </div>
   </div>
-  <div class="cmds">
-    <div class="cmd-chip"><em>"</em>geç<em>"</em> → atla</div>
-    <div class="cmd-chip"><em>"</em>tekrar<em>"</em> → dinle</div>
-    <div class="cmd-chip"><em>"</em>anla<em>"</em> → anlamı göster</div>
-    <div class="cmd-chip"><em>"</em>kaydet<em>"</em> → ilerlemeyi kaydet</div>
-    <div class="cmd-chip"><em>"</em>yeniden başla<em>"</em> → sıfırla</div>
-  </div>
-  <button class="start-btn" onclick="app.start()">🎙️ BAŞLA</button>
-  <div style="margin-top:20px;font-size:12px;color:var(--muted);text-align:center;line-height:1.7;">
-    Mikrofon izni gereklidir · Chrome/Edge önerilir<br>
+  <button class="sbtn" onclick="App.start()">🎙️ BAŞLA</button>
+  <div class="ovnote">
+    Mikrofon izni gereklidir<br>
+    Chrome, Edge (masaüstü) · Safari 11+<br>
+    <strong>HTTPS veya localhost</strong> gereklidir<br>
     İlerlemeniz otomatik kaydedilir
   </div>
 </div>
 
-<!-- ═══ APP SHELL ════════════════════════════════════════════ -->
 <div class="shell">
-
-  <!-- header -->
   <div class="hdr">
     <div class="logo">koko.app</div>
-    <div class="hdr-right">
-      <select class="level-picker" id="levelPicker" onchange="app.changeLevel(this.value)"></select>
+    <div class="hdr-r">
+      <select class="lv-sel" id="lvSel" onchange="App.changeLevel(this.value)"></select>
     </div>
   </div>
 
-  <!-- status strip -->
-  <div class="status-strip">
-    <div class="dot-wrap">
-      <div class="dot" id="dot"></div>
-      <span id="statusTxt" style="color:var(--muted)">Hazır</span>
-    </div>
-    <div class="strip-stat">🔥 Seri: <strong id="streakVal">0</strong></div>
-    <div class="strip-stat">⏱ <strong id="timerVal">00:00</strong></div>
+  <!-- mic permission warning -->
+  <div class="mic-banner" id="micBanner">
+    <span>⚠️ Mikrofon erişimi reddedildi veya kullanılamıyor.</span>
+    <button onclick="App.requestMic()">İzin Ver</button>
   </div>
 
-  <!-- stage nav -->
-  <div class="stage-nav">
-    <button class="nav-btn" id="prevBtn" onclick="app.prevStage()" title="Önceki Aşama">‹</button>
-    <div class="stage-info">
-      <div class="stage-name" id="stageName">A1.1</div>
-      <div class="stage-sub" id="stageSub">Kelimeler</div>
-      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-      <div style="font-size:11px;color:var(--muted);"><span id="idxTxt">1</span> / <span id="totalTxt">1</span></div>
-    </div>
-    <button class="nav-btn" id="nextBtn" onclick="app.nextStage()" title="Sonraki Aşama">›</button>
+  <div class="sts">
+    <div class="dot-row"><div class="dot" id="dot"></div><span id="stsTxt">Hazır</span></div>
+    <span>🔥 <span id="strk">0</span> seri</span>
+    <span>⏱ <span id="tmr">00:00</span></span>
   </div>
 
-  <!-- main -->
-  <div class="main">
-    <div class="wave-ring">
+  <div class="snav">
+    <button class="nbtn" id="prevB" onclick="App.prevLv()" disabled>‹</button>
+    <div class="smid">
+      <div class="slabel" id="sname">–</div>
+      <div class="pbar"><div class="pfill" id="pfill" style="width:0%"></div></div>
+      <div class="ptxt"><span id="idxt">0</span> / <span id="tott">0</span></div>
+    </div>
+    <button class="nbtn" id="nextB" onclick="App.nextLv()">›</button>
+  </div>
+
+  <div class="amain">
+    <div class="orb-w">
       <div class="ring r1" id="r1"></div>
       <div class="ring r2" id="r2"></div>
       <div class="ring r3" id="r3"></div>
-      <div class="core" id="core">🎙️</div>
+      <div class="orb" id="orb">🎙️</div>
     </div>
-
-    <div class="word-card">
-      <div class="type-tag" id="typeTag">KELIME</div>
-      <div class="de-word">
-        <span class="article-span" id="artSpan" style="display:none"></span>
-        <span id="deWord">–</span>
-      </div>
-      <div class="phonetic" id="phonetic"></div>
-      <div class="tr-word" id="trWord"></div>
-      <div class="status-msg" id="statusMsg"></div>
+    <div class="wcard">
+      <div class="tbadge" id="tbadge">KELIME</div>
+      <div class="de-w"><span class="de-art" id="art" style="display:none"></span><span id="deW">–</span></div>
+      <div class="phon" id="phon"></div>
+      <div class="tr-w" id="trW"></div>
+      <div class="smsg" id="smsg"></div>
     </div>
   </div>
 
-  <!-- hints -->
-  <div class="hints">
-    <div class="hint"><strong>"geç"</strong> atla</div>
-    <div class="hint"><strong>"tekrar"</strong> tekrar dinle</div>
-    <div class="hint"><strong>"anla"</strong> anlamı göster</div>
-    <div class="hint"><strong>"kaydet"</strong> ilerlemeyi kaydet</div>
+  <!-- ACTION BUTTONS -->
+  <div class="actions">
+    <button class="act-btn btn-skip" onclick="App.skip()">
+      <span class="btn-icon">⏭</span>
+      <span>Geç</span>
+      <span class="btn-key">"geç"</span>
+    </button>
+    <button class="act-btn btn-repeat" onclick="App.repeat()">
+      <span class="btn-icon">🔁</span>
+      <span>Tekrar Dinle</span>
+      <span class="btn-key">"tekrar"</span>
+    </button>
   </div>
 
-  <!-- stats -->
-  <div class="stats">
-    <div class="stat"><div class="stat-val" id="correctVal">0</div><div class="stat-lbl">Doğru</div></div>
-    <div class="stat"><div class="stat-val" id="accuracyVal">–</div><div class="stat-lbl">Başarı</div></div>
-    <div class="stat"><div class="stat-val" id="dailyVal">0</div><div class="stat-lbl">Bugün</div></div>
-    <div class="stat"><div class="stat-val" id="totalDoneVal">0</div><div class="stat-lbl">Toplam</div></div>
+  <div class="astats">
+    <div class="si"><div class="sv" id="crrct">0</div><div class="sl">Doğru</div></div>
+    <div class="si"><div class="sv" id="acc">–</div><div class="sl">Başarı</div></div>
+    <div class="si"><div class="sv" id="dly">0</div><div class="sl">Bugün</div></div>
+    <div class="si"><div class="sv" id="tot">0</div><div class="sl">Toplam</div></div>
   </div>
 </div>
 
-<div class="save-badge" id="saveBadge">✅ İlerleme kaydedildi</div>
+<div id="no-recog-banner">
+  Bu tarayıcı ses tanımayı desteklemiyor. Butonları kullanarak ilerleyebilirsiniz.
+  Chrome, Edge veya Safari 11+ önerilir.
+</div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════
-//  VOCABULARY DATABASE
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// LEVEL META
+// ════════════════════════════════════════════════════════════
 const LEVELS = [
-// ─── A1.1 ───────────────────────────────────────────────────────
-{
-  id:"a11", label:"A1.1", stages:[
-  {
-    name:"ALFABE & HARFLER", sub:"a11",
-    words:[
-      {de:"a",tr:"a",phonetic:"[a:]",type:"harf"},
-      {de:"b",tr:"be",phonetic:"[beː]",type:"harf"},
-      {de:"c",tr:"ce",phonetic:"[tseː]",type:"harf"},
-      {de:"d",tr:"de",phonetic:"[deː]",type:"harf"},
-      {de:"e",tr:"e",phonetic:"[eː]",type:"harf"},
-      {de:"f",tr:"ef",phonetic:"[ɛf]",type:"harf"},
-      {de:"g",tr:"ge",phonetic:"[ɡeː]",type:"harf"},
-      {de:"h",tr:"ha",phonetic:"[haː]",type:"harf"},
-      {de:"i",tr:"i",phonetic:"[iː]",type:"harf"},
-      {de:"j",tr:"jot",phonetic:"[jɔt]",type:"harf"},
-      {de:"k",tr:"ka",phonetic:"[kaː]",type:"harf"},
-      {de:"l",tr:"el",phonetic:"[ɛl]",type:"harf"},
-      {de:"m",tr:"em",phonetic:"[ɛm]",type:"harf"},
-      {de:"n",tr:"en",phonetic:"[ɛn]",type:"harf"},
-      {de:"o",tr:"o",phonetic:"[oː]",type:"harf"},
-      {de:"p",tr:"pe",phonetic:"[peː]",type:"harf"},
-      {de:"q",tr:"ku",phonetic:"[kuː]",type:"harf"},
-      {de:"r",tr:"er",phonetic:"[ɛʁ]",type:"harf"},
-      {de:"s",tr:"es",phonetic:"[ɛs]",type:"harf"},
-      {de:"t",tr:"te",phonetic:"[teː]",type:"harf"},
-      {de:"u",tr:"u",phonetic:"[uː]",type:"harf"},
-      {de:"v",tr:"fau",phonetic:"[faʊ]",type:"harf"},
-      {de:"w",tr:"ve",phonetic:"[veː]",type:"harf"},
-      {de:"x",tr:"iks",phonetic:"[ɪks]",type:"harf"},
-      {de:"y",tr:"üpsilon",phonetic:"[ˈʏpsilɔn]",type:"harf"},
-      {de:"z",tr:"zet",phonetic:"[tsɛt]",type:"harf"},
-      {de:"ä",tr:"a umlaut",phonetic:"[ɛː]",type:"harf"},
-      {de:"ö",tr:"o umlaut",phonetic:"[øː]",type:"harf"},
-      {de:"ü",tr:"ü umlaut",phonetic:"[yː]",type:"harf"},
-      {de:"ß",tr:"es-zet",phonetic:"[ɛsˈtsɛt]",type:"harf"}
-    ]
-  },
-  {
-    name:"SAYILAR 1-20", sub:"a11",
-    words:[
-      {de:"null",tr:"sıfır",phonetic:"[nʊl]"},
-      {de:"eins",tr:"bir",phonetic:"[aɪns]"},
-      {de:"zwei",tr:"iki",phonetic:"[tsvaɪ]"},
-      {de:"drei",tr:"üç",phonetic:"[dʁaɪ]"},
-      {de:"vier",tr:"dört",phonetic:"[fiːɐ]"},
-      {de:"fünf",tr:"beş",phonetic:"[fʏnf]"},
-      {de:"sechs",tr:"altı",phonetic:"[zɛks]"},
-      {de:"sieben",tr:"yedi",phonetic:"[ˈziːbən]"},
-      {de:"acht",tr:"sekiz",phonetic:"[axt]"},
-      {de:"neun",tr:"dokuz",phonetic:"[nɔɪn]"},
-      {de:"zehn",tr:"on",phonetic:"[tseːn]"},
-      {de:"elf",tr:"on bir",phonetic:"[ɛlf]"},
-      {de:"zwölf",tr:"on iki",phonetic:"[tsvœlf]"},
-      {de:"dreizehn",tr:"on üç",phonetic:"[ˈdʁaɪtseːn]"},
-      {de:"vierzehn",tr:"on dört",phonetic:"[ˈfɪʁtseːn]"},
-      {de:"fünfzehn",tr:"on beş",phonetic:"[ˈfʏnftseːn]"},
-      {de:"sechzehn",tr:"on altı",phonetic:"[ˈzɛçtseːn]"},
-      {de:"siebzehn",tr:"on yedi",phonetic:"[ˈziːptseːn]"},
-      {de:"achtzehn",tr:"on sekiz",phonetic:"[ˈaxtseːn]"},
-      {de:"neunzehn",tr:"on dokuz",phonetic:"[ˈnɔɪntseːn]"},
-      {de:"zwanzig",tr:"yirmi",phonetic:"[ˈtsvantsɪç]"}
-    ]
-  },
-  {
-    name:"SAYILAR 30-1000", sub:"a11",
-    words:[
-      {de:"dreißig",tr:"otuz",phonetic:"[ˈdʁaɪsɪç]"},
-      {de:"vierzig",tr:"kırk",phonetic:"[ˈfɪʁtsɪç]"},
-      {de:"fünfzig",tr:"elli",phonetic:"[ˈfʏnftsɪç]"},
-      {de:"sechzig",tr:"altmış",phonetic:"[ˈzɛçtsɪç]"},
-      {de:"siebzig",tr:"yetmiş",phonetic:"[ˈziːptsɪç]"},
-      {de:"achtzig",tr:"seksen",phonetic:"[ˈaxtsɪç]"},
-      {de:"neunzig",tr:"doksan",phonetic:"[ˈnɔɪntsɪç]"},
-      {de:"hundert",tr:"yüz",phonetic:"[ˈhʊndɐt]"},
-      {de:"tausend",tr:"bin",phonetic:"[ˈtaʊzənt]"},
-      {de:"eine Million",tr:"bir milyon",phonetic:"[ˈaɪnə mɪˈli̯oːn]"}
-    ]
-  },
-  {
-    name:"SELAMLAMA", sub:"a11",
-    type:"cümle",
-    words:[
-      {de:"Hallo!",tr:"Merhaba!",phonetic:"[haˈloː]",type:"cümle"},
-      {de:"Guten Morgen!",tr:"Günaydın!",phonetic:"[ˈɡuːtən ˈmɔʁɡən]",type:"cümle"},
-      {de:"Guten Tag!",tr:"İyi günler!",phonetic:"[ˈɡuːtən taːk]",type:"cümle"},
-      {de:"Guten Abend!",tr:"İyi akşamlar!",phonetic:"[ˈɡuːtən ˈaːbənt]",type:"cümle"},
-      {de:"Gute Nacht!",tr:"İyi geceler!",phonetic:"[ˈɡuːtə naxt]",type:"cümle"},
-      {de:"Auf Wiedersehen!",tr:"Hoşça kal!",phonetic:"[aʊf ˈviːdɐˌzeːən]",type:"cümle"},
-      {de:"Tschüss!",tr:"Görüşürüz!",phonetic:"[tʃʏs]",type:"cümle"},
-      {de:"Bis morgen!",tr:"Yarına kadar!",phonetic:"[bɪs ˈmɔʁɡən]",type:"cümle"},
-      {de:"Wie geht es Ihnen?",tr:"Nasılsınız? (resmi)",phonetic:"[viː ɡeːt ɛs ˈiːnən]",type:"cümle"},
-      {de:"Wie geht's?",tr:"Nasılsın? (samimi)",phonetic:"[viː ɡeːts]",type:"cümle"},
-      {de:"Mir geht's gut.",tr:"İyiyim.",phonetic:"[miːɐ ɡeːts ɡuːt]",type:"cümle"},
-      {de:"Danke!",tr:"Teşekkür ederim!",phonetic:"[ˈdaŋkə]",type:"cümle"},
-      {de:"Bitte!",tr:"Rica ederim! / Lütfen!",phonetic:"[ˈbɪtə]",type:"cümle"},
-      {de:"Entschuldigung!",tr:"Pardon! / Özür dilerim!",phonetic:"[ɛntˈʃʊldɪɡʊŋ]",type:"cümle"},
-      {de:"Es tut mir leid.",tr:"Üzgünüm.",phonetic:"[ɛs tuːt miːɐ laɪt]",type:"cümle"}
-    ]
-  },
-  {
-    name:"RENKLER & ŞEKLER", sub:"a11",
-    words:[
-      {de:"rot",tr:"kırmızı",phonetic:"[ʁoːt]"},
-      {de:"blau",tr:"mavi",phonetic:"[blaʊ]"},
-      {de:"grün",tr:"yeşil",phonetic:"[ɡʁyːn]"},
-      {de:"gelb",tr:"sarı",phonetic:"[ɡɛlp]"},
-      {de:"schwarz",tr:"siyah",phonetic:"[ʃvaʁts]"},
-      {de:"weiß",tr:"beyaz",phonetic:"[vaɪs]"},
-      {de:"grau",tr:"gri",phonetic:"[ɡʁaʊ]"},
-      {de:"braun",tr:"kahverengi",phonetic:"[bʁaʊn]"},
-      {de:"orange",tr:"turuncu",phonetic:"[ɔˈʁɑːnʒə]"},
-      {de:"lila",tr:"mor",phonetic:"[ˈliːla]"},
-      {de:"rosa",tr:"pembe",phonetic:"[ˈʁoːza]"},
-      {de:"der Kreis",tr:"çember",phonetic:"[kʁaɪs]",article:"der"},
-      {de:"das Dreieck",tr:"üçgen",phonetic:"[ˈdʁaɪˌɛk]",article:"das"},
-      {de:"das Viereck",tr:"dörtgen",phonetic:"[ˈfiːɐˌɛk]",article:"das"},
-      {de:"das Quadrat",tr:"kare",phonetic:"[kvaˈdʁaːt]",article:"das"}
-    ]
-  },
-  {
-    name:"AİLE", sub:"a11",
-    words:[
-      {de:"die Mutter",tr:"anne",phonetic:"[ˈmʊtɐ]",article:"die"},
-      {de:"der Vater",tr:"baba",phonetic:"[ˈfaːtɐ]",article:"der"},
-      {de:"die Eltern",tr:"ebeveynler",phonetic:"[ˈɛltɐn]"},
-      {de:"der Sohn",tr:"oğul",phonetic:"[zoːn]",article:"der"},
-      {de:"die Tochter",tr:"kız",phonetic:"[ˈtɔxtɐ]",article:"die"},
-      {de:"der Bruder",tr:"erkek kardeş",phonetic:"[ˈbʁuːdɐ]",article:"der"},
-      {de:"die Schwester",tr:"kız kardeş",phonetic:"[ˈʃvɛstɐ]",article:"die"},
-      {de:"der Großvater",tr:"büyükbaba",phonetic:"[ˈɡʁoːsˌfaːtɐ]",article:"der"},
-      {de:"die Großmutter",tr:"büyükanne",phonetic:"[ˈɡʁoːsˌmʊtɐ]",article:"die"},
-      {de:"der Onkel",tr:"amca / dayı / enişte",phonetic:"[ˈɔŋkəl]",article:"der"},
-      {de:"die Tante",tr:"hala / teyze / yenge",phonetic:"[ˈtantə]",article:"die"},
-      {de:"der Cousin",tr:"erkek kuzen",phonetic:"[kuˈzɛ̃]",article:"der"},
-      {de:"die Cousine",tr:"kız kuzen",phonetic:"[kuˈziːnə]",article:"die"},
-      {de:"das Baby",tr:"bebek",phonetic:"[ˈbeːbi]",article:"das"},
-      {de:"das Kind",tr:"çocuk",phonetic:"[kɪnt]",article:"das"}
-    ]
-  },
-  {
-    name:"TEMEL KELIMELER", sub:"a11",
-    words:[
-      {de:"ja",tr:"evet",phonetic:"[jaː]"},
-      {de:"nein",tr:"hayır",phonetic:"[naɪn]"},
-      {de:"und",tr:"ve",phonetic:"[ʊnt]"},
-      {de:"oder",tr:"veya",phonetic:"[ˈoːdɐ]"},
-      {de:"aber",tr:"ama / fakat",phonetic:"[ˈaːbɐ]"},
-      {de:"auch",tr:"de / da / aynı zamanda",phonetic:"[aʊx]"},
-      {de:"nicht",tr:"değil",phonetic:"[nɪçt]"},
-      {de:"kein",tr:"hiç / hiçbir",phonetic:"[kaɪn]"},
-      {de:"hier",tr:"burada",phonetic:"[hiːɐ]"},
-      {de:"da",tr:"orada / işte",phonetic:"[daː]"},
-      {de:"dort",tr:"orada (uzak)",phonetic:"[dɔʁt]"},
-      {de:"jetzt",tr:"şimdi",phonetic:"[jɛtst]"},
-      {de:"schon",tr:"zaten / çoktan",phonetic:"[ʃoːn]"},
-      {de:"noch",tr:"hâlâ / daha",phonetic:"[nɔx]"},
-      {de:"sehr",tr:"çok",phonetic:"[zeːɐ]"},
-      {de:"viel",tr:"çok (miktar)",phonetic:"[fiːl]"},
-      {de:"wenig",tr:"az",phonetic:"[ˈveːnɪç]"},
-      {de:"alles",tr:"her şey",phonetic:"[ˈalɐs]"},
-      {de:"nichts",tr:"hiçbir şey",phonetic:"[nɪçts]"},
-      {de:"immer",tr:"her zaman",phonetic:"[ˈɪmɐ]"}
-    ]
-  },
-  {
-    name:"GÜNLER & AYLAR", sub:"a11",
-    words:[
-      {de:"der Montag",tr:"Pazartesi",phonetic:"[ˈmoːntaːk]",article:"der"},
-      {de:"der Dienstag",tr:"Salı",phonetic:"[ˈdiːnstaːk]",article:"der"},
-      {de:"der Mittwoch",tr:"Çarşamba",phonetic:"[ˈmɪtvɔx]",article:"der"},
-      {de:"der Donnerstag",tr:"Perşembe",phonetic:"[ˈdɔnɐstaːk]",article:"der"},
-      {de:"der Freitag",tr:"Cuma",phonetic:"[ˈfʁaɪtaːk]",article:"der"},
-      {de:"der Samstag",tr:"Cumartesi",phonetic:"[ˈzamstaːk]",article:"der"},
-      {de:"der Sonntag",tr:"Pazar",phonetic:"[ˈzɔntaːk]",article:"der"},
-      {de:"der Januar",tr:"Ocak",phonetic:"[ˈjanuaːɐ]",article:"der"},
-      {de:"der Februar",tr:"Şubat",phonetic:"[ˈfeːbʁuaːɐ]",article:"der"},
-      {de:"der März",tr:"Mart",phonetic:"[mɛʁts]",article:"der"},
-      {de:"der April",tr:"Nisan",phonetic:"[aˈpʁɪl]",article:"der"},
-      {de:"der Mai",tr:"Mayıs",phonetic:"[maɪ]",article:"der"},
-      {de:"der Juni",tr:"Haziran",phonetic:"[ˈjuːni]",article:"der"},
-      {de:"der Juli",tr:"Temmuz",phonetic:"[ˈjuːli]",article:"der"},
-      {de:"der August",tr:"Ağustos",phonetic:"[aʊˈɡʊst]",article:"der"},
-      {de:"der September",tr:"Eylül",phonetic:"[zɛpˈtɛmbɐ]",article:"der"},
-      {de:"der Oktober",tr:"Ekim",phonetic:"[ɔkˈtoːbɐ]",article:"der"},
-      {de:"der November",tr:"Kasım",phonetic:"[noˈvɛmbɐ]",article:"der"},
-      {de:"der Dezember",tr:"Aralık",phonetic:"[deˈtsɛmbɐ]",article:"der"}
-    ]
-  }
-  ]
-},
-// ─── A1.2 ───────────────────────────────────────────────────────
-{
-  id:"a12", label:"A1.2", stages:[
-  {
-    name:"YİYECEK & İÇECEK", sub:"a12",
-    words:[
-      {de:"das Brot",tr:"ekmek",phonetic:"[bʁoːt]",article:"das"},
-      {de:"die Butter",tr:"tereyağı",phonetic:"[ˈbʊtɐ]",article:"die"},
-      {de:"der Käse",tr:"peynir",phonetic:"[ˈkɛːzə]",article:"der"},
-      {de:"das Ei",tr:"yumurta",phonetic:"[aɪ]",article:"das"},
-      {de:"die Milch",tr:"süt",phonetic:"[mɪlç]",article:"die"},
-      {de:"der Apfel",tr:"elma",phonetic:"[ˈapfəl]",article:"der"},
-      {de:"die Banane",tr:"muz",phonetic:"[baˈnaːnə]",article:"die"},
-      {de:"das Fleisch",tr:"et",phonetic:"[flaɪʃ]",article:"das"},
-      {de:"der Fisch",tr:"balık",phonetic:"[fɪʃ]",article:"der"},
-      {de:"die Suppe",tr:"çorba",phonetic:"[ˈzʊpə]",article:"die"},
-      {de:"das Gemüse",tr:"sebze",phonetic:"[ɡəˈmyːzə]",article:"das"},
-      {de:"das Obst",tr:"meyve",phonetic:"[oːpst]",article:"das"},
-      {de:"das Wasser",tr:"su",phonetic:"[ˈvasɐ]",article:"das"},
-      {de:"der Kaffee",tr:"kahve",phonetic:"[kaˈfeː]",article:"der"},
-      {de:"der Tee",tr:"çay",phonetic:"[teː]",article:"der"},
-      {de:"der Saft",tr:"meyve suyu",phonetic:"[zaft]",article:"der"},
-      {de:"das Bier",tr:"bira",phonetic:"[biːɐ]",article:"das"},
-      {de:"der Wein",tr:"şarap",phonetic:"[vaɪn]",article:"der"},
-      {de:"der Zucker",tr:"şeker",phonetic:"[ˈtsʊkɐ]",article:"der"},
-      {de:"das Salz",tr:"tuz",phonetic:"[zalts]",article:"das"}
-    ]
-  },
-  {
-    name:"VÜCUT PARÇALARI", sub:"a12",
-    words:[
-      {de:"der Kopf",tr:"baş",phonetic:"[kɔpf]",article:"der"},
-      {de:"das Gesicht",tr:"yüz",phonetic:"[ɡəˈzɪçt]",article:"das"},
-      {de:"das Auge",tr:"göz",phonetic:"[ˈaʊɡə]",article:"das"},
-      {de:"die Nase",tr:"burun",phonetic:"[ˈnaːzə]",article:"die"},
-      {de:"der Mund",tr:"ağız",phonetic:"[mʊnt]",article:"der"},
-      {de:"das Ohr",tr:"kulak",phonetic:"[oːɐ]",article:"das"},
-      {de:"der Hals",tr:"boyun / boğaz",phonetic:"[hals]",article:"der"},
-      {de:"die Hand",tr:"el",phonetic:"[hant]",article:"die"},
-      {de:"der Arm",tr:"kol",phonetic:"[aʁm]",article:"der"},
-      {de:"das Bein",tr:"bacak",phonetic:"[baɪn]",article:"das"},
-      {de:"der Fuß",tr:"ayak",phonetic:"[fuːs]",article:"der"},
-      {de:"der Bauch",tr:"karın",phonetic:"[baʊx]",article:"der"},
-      {de:"der Rücken",tr:"sırt",phonetic:"[ˈʁʏkən]",article:"der"},
-      {de:"das Herz",tr:"kalp",phonetic:"[hɛʁts]",article:"das"},
-      {de:"das Haar",tr:"saç",phonetic:"[haːɐ]",article:"das"}
-    ]
-  },
-  {
-    name:"EV & EŞYALAR", sub:"a12",
-    words:[
-      {de:"das Haus",tr:"ev",phonetic:"[haʊs]",article:"das"},
-      {de:"die Wohnung",tr:"daire",phonetic:"[ˈvoːnʊŋ]",article:"die"},
-      {de:"das Zimmer",tr:"oda",phonetic:"[ˈtsɪmɐ]",article:"das"},
-      {de:"die Küche",tr:"mutfak",phonetic:"[ˈkʏçə]",article:"die"},
-      {de:"das Badezimmer",tr:"banyo",phonetic:"[ˈbaːdəˌtsɪmɐ]",article:"das"},
-      {de:"das Schlafzimmer",tr:"yatak odası",phonetic:"[ˈʃlaːfˌtsɪmɐ]",article:"das"},
-      {de:"das Wohnzimmer",tr:"oturma odası",phonetic:"[ˈvoːnˌtsɪmɐ]",article:"das"},
-      {de:"der Tisch",tr:"masa",phonetic:"[tɪʃ]",article:"der"},
-      {de:"der Stuhl",tr:"sandalye",phonetic:"[ʃtuːl]",article:"der"},
-      {de:"das Bett",tr:"yatak",phonetic:"[bɛt]",article:"das"},
-      {de:"der Schrank",tr:"dolap",phonetic:"[ʃʁaŋk]",article:"der"},
-      {de:"das Fenster",tr:"pencere",phonetic:"[ˈfɛnstɐ]",article:"das"},
-      {de:"die Tür",tr:"kapı",phonetic:"[tyːɐ]",article:"die"},
-      {de:"die Lampe",tr:"lamba",phonetic:"[ˈlampə]",article:"die"},
-      {de:"das Buch",tr:"kitap",phonetic:"[buːx]",article:"das"}
-    ]
-  },
-  {
-    name:"TEMEL CÜMLECİKLER", sub:"a12",
-    type:"cümle",
-    words:[
-      {de:"Ich heiße …",tr:"Benim adım … / Ben … ım/im",phonetic:"[ɪç ˈhaɪsə]",type:"cümle"},
-      {de:"Ich komme aus der Türkei.",tr:"Türkiye'den geliyorum.",phonetic:"[ɪç ˈkɔmə aʊs deːɐ tʏʁˈkaɪ]",type:"cümle"},
-      {de:"Ich wohne in Istanbul.",tr:"İstanbul'da yaşıyorum.",phonetic:"[ɪç ˈvoːnə ɪn ɪsˈtambʊl]",type:"cümle"},
-      {de:"Ich spreche ein bisschen Deutsch.",tr:"Biraz Almanca konuşuyorum.",phonetic:"[ɪç ˈʃpʁɛçə aɪn ˈbɪsçən ˈdɔɪtʃ]",type:"cümle"},
-      {de:"Wie heißen Sie?",tr:"Adınız nedir? (resmi)",phonetic:"[viː ˈhaɪsən ziː]",type:"cümle"},
-      {de:"Wie alt bist du?",tr:"Kaç yaşındasın?",phonetic:"[viː alt bɪst duː]",type:"cümle"},
-      {de:"Ich bin zwanzig Jahre alt.",tr:"Ben yirmi yaşındayım.",phonetic:"[ɪç bɪn ˈtsvantsɪç ˈjaːʁə alt]",type:"cümle"},
-      {de:"Wo wohnst du?",tr:"Nerede oturuyorsun?",phonetic:"[voː voːnst duː]",type:"cümle"},
-      {de:"Was machst du?",tr:"Ne yapıyorsun? / Mesleğin ne?",phonetic:"[vas maxt duː]",type:"cümle"},
-      {de:"Ich bin Student.",tr:"Ben öğrenciyim.",phonetic:"[ɪç bɪn ʃtuˈdɛnt]",type:"cümle"},
-      {de:"Ich arbeite als Lehrer.",tr:"Öğretmen olarak çalışıyorum.",phonetic:"[ɪç ˈaʁbaɪtə als ˈleːʁɐ]",type:"cümle"},
-      {de:"Haben Sie einen Moment?",tr:"Bir dakikanız var mı?",phonetic:"[ˈhaːbən ziː ˈaɪnən moˈmɛnt]",type:"cümle"}
-    ]
-  }
-  ]
-},
-// ─── B1.1 ───────────────────────────────────────────────────────
-{
-  id:"b11", label:"B1.1", stages:[
-  {
-    name:"ZAMAN & MEKAN", sub:"b11",
-    words:[
-      {de:"die Zeit",tr:"zaman",phonetic:"[tsaɪt]",article:"die"},
-      {de:"die Vergangenheit",tr:"geçmiş",phonetic:"[fɛɐˈɡaŋənhaɪt]",article:"die"},
-      {de:"die Gegenwart",tr:"şimdiki zaman",phonetic:"[ˈɡeːɡənvaʁt]",article:"die"},
-      {de:"die Zukunft",tr:"gelecek",phonetic:"[ˈtsuːkʊnft]",article:"die"},
-      {de:"der Augenblick",tr:"an / göz kırpımı",phonetic:"[ˈaʊɡənblɪk]",article:"der"},
-      {de:"die Dauer",tr:"süre",phonetic:"[ˈdaʊɐ]",article:"die"},
-      {de:"der Abstand",tr:"mesafe / aralık",phonetic:"[ˈapʃtant]",article:"der"},
-      {de:"neben",tr:"yanında",phonetic:"[ˈneːbən]"},
-      {de:"zwischen",tr:"arasında",phonetic:"[ˈtsvɪʃən]"},
-      {de:"hinter",tr:"arkasında",phonetic:"[ˈhɪntɐ]"},
-      {de:"vor",tr:"önünde",phonetic:"[foːɐ]"},
-      {de:"über",tr:"üzerinde",phonetic:"[ˈyːbɐ]"},
-      {de:"unter",tr:"altında",phonetic:"[ˈʊntɐ]"},
-      {de:"links",tr:"solda",phonetic:"[lɪŋks]"},
-      {de:"rechts",tr:"sağda",phonetic:"[ʁɛçts]"}
-    ]
-  },
-  {
-    name:"B1 KELIME DAĞARCIĞI", sub:"b11",
-    words:[
-      {de:"die Meinung",tr:"görüş / fikir",phonetic:"[ˈmaɪnʊŋ]",article:"die"},
-      {de:"der Grund",tr:"neden / zemin",phonetic:"[ɡʁʊnt]",article:"der"},
-      {de:"die Lösung",tr:"çözüm",phonetic:"[ˈløːzʊŋ]",article:"die"},
-      {de:"das Problem",tr:"sorun",phonetic:"[pʁoˈbleːm]",article:"das"},
-      {de:"die Erfahrung",tr:"deneyim",phonetic:"[ɛɐˈfaːʁʊŋ]",article:"die"},
-      {de:"die Möglichkeit",tr:"olasılık / imkân",phonetic:"[ˈmøːklɪçkaɪt]",article:"die"},
-      {de:"die Aufgabe",tr:"görev",phonetic:"[ˈaʊfˌɡaːbə]",article:"die"},
-      {de:"die Entwicklung",tr:"gelişme",phonetic:"[ɛntˈvɪklʊŋ]",article:"die"},
-      {de:"der Unterschied",tr:"fark",phonetic:"[ˈʊntɐˌʃiːt]",article:"der"},
-      {de:"die Änderung",tr:"değişiklik",phonetic:"[ˈɛndəʁʊŋ]",article:"die"},
-      {de:"erklären",tr:"açıklamak",phonetic:"[ɛɐˈklɛːʁən]"},
-      {de:"verstehen",tr:"anlamak",phonetic:"[fɛɐˈʃteːən]"},
-      {de:"erinnern",tr:"hatırlamak",phonetic:"[ɛɐˈɪnɐn]"},
-      {de:"beschreiben",tr:"tanımlamak",phonetic:"[bəˈʃʁaɪbən]"},
-      {de:"vergleichen",tr:"karşılaştırmak",phonetic:"[fɛɐˈɡlaɪçən]"}
-    ]
-  },
-  {
-    name:"B1 CÜMLELERİ", sub:"b11",
-    type:"cümle",
-    words:[
-      {de:"Meiner Meinung nach ist das richtig.",tr:"Benim görüşüme göre bu doğru.",phonetic:"[ˈmaɪnɐ ˈmaɪnʊŋ naːx ɪst das ˈʁɪçtɪç]",type:"cümle"},
-      {de:"Ich stimme dir zu.",tr:"Sana katılıyorum.",phonetic:"[ɪç ˈʃtɪmə diːɐ tsuː]",type:"cümle"},
-      {de:"Das kann ich leider nicht machen.",tr:"Bunu maalesef yapamam.",phonetic:"[das kan ɪç ˈlaɪdɐ nɪçt ˈmaxən]",type:"cümle"},
-      {de:"Ich würde gern mehr wissen.",tr:"Daha fazla bilmek isterim.",phonetic:"[ɪç ˈvʏʁdə ɡɛʁn meːɐ ˈvɪsən]",type:"cümle"},
-      {de:"Könnten Sie das bitte wiederholen?",tr:"Bunu tekrar edebilir misiniz lütfen?",phonetic:"[ˈkœntən ziː das ˈbɪtə ˌviːdɐˈhoːlən]",type:"cümle"},
-      {de:"Ich habe das nicht verstanden.",tr:"Bunu anlayamadım.",phonetic:"[ɪç ˈhaːbə das nɪçt fɛɐˈʃtandən]",type:"cümle"},
-      {de:"Was bedeutet das auf Türkisch?",tr:"Bunun Türkçesi nedir?",phonetic:"[vas bəˈdɔɪtɛt das aʊf ˈtʏʁkɪʃ]",type:"cümle"},
-      {de:"Ich lerne Deutsch seit einem Jahr.",tr:"Bir yıldır Almanca öğreniyorum.",phonetic:"[ɪç ˈlɛʁnə ˈdɔɪtʃ zaɪt ˈaɪnəm jaːɐ]",type:"cümle"}
-    ]
-  }
-  ]
-},
-// ─── B1.2 ───────────────────────────────────────────────────────
-{
-  id:"b12", label:"B1.2", stages:[
-  {
-    name:"DUYGULAR & DÜŞÜNCELER", sub:"b12",
-    words:[
-      {de:"die Freude",tr:"sevinç",phonetic:"[ˈfʁɔɪdə]",article:"die"},
-      {de:"die Trauer",tr:"üzüntü",phonetic:"[ˈtʁaʊɐ]",article:"die"},
-      {de:"die Angst",tr:"korku",phonetic:"[aŋst]",article:"die"},
-      {de:"die Wut",tr:"öfke",phonetic:"[vuːt]",article:"die"},
-      {de:"die Enttäuschung",tr:"hayal kırıklığı",phonetic:"[ɛntˈtɔɪʃʊŋ]",article:"die"},
-      {de:"die Hoffnung",tr:"umut",phonetic:"[ˈhɔfnʊŋ]",article:"die"},
-      {de:"die Überraschung",tr:"sürpriz",phonetic:"[ˈyːbɐˌʁaʃʊŋ]",article:"die"},
-      {de:"das Vertrauen",tr:"güven",phonetic:"[fɛɐˈtʁaʊən]",article:"das"},
-      {de:"die Eifersucht",tr:"kıskançlık",phonetic:"[ˈaɪfɐˌzʊxt]",article:"die"},
-      {de:"die Sehnsucht",tr:"özlem",phonetic:"[ˈzeːnzʊxt]",article:"die"},
-      {de:"sich freuen",tr:"sevinmek",phonetic:"[zɪç ˈfʁɔɪən]"},
-      {de:"sich ärgern",tr:"sinirlenme",phonetic:"[zɪç ˈɛʁɡɐn]"},
-      {de:"sich vorstellen",tr:"hayal etmek / tanıtmak",phonetic:"[zɪç ˈfoːɐʃtɛlən]"},
-      {de:"sich erinnern",tr:"hatırlamak",phonetic:"[zɪç ɛɐˈɪnɐn]"},
-      {de:"zweifeln",tr:"şüphelenmek",phonetic:"[ˈtsvaɪfəln]"}
-    ]
-  },
-  {
-    name:"B1.2 CÜMLELERİ", sub:"b12",
-    type:"cümle",
-    words:[
-      {de:"Obwohl es schwer ist, gebe ich nicht auf.",tr:"Zor olsa da pes etmiyorum.",phonetic:"[ɔpˈvoːl ɛs ʃveːɐ ɪst ˈɡeːbə ɪç nɪçt aʊf]",type:"cümle"},
-      {de:"Je mehr ich übe, desto besser werde ich.",tr:"Ne kadar çok çalışırsam o kadar iyi olurum.",phonetic:"[jeː meːɐ ɪç ˈyːbə ˈdɛsto ˈbɛsɐ ˈveːɐdə ɪç]",type:"cümle"},
-      {de:"Ich bin der Meinung, dass Bildung wichtig ist.",tr:"Eğitimin önemli olduğu görüşündeyim.",phonetic:"[ɪç bɪn deːɐ ˈmaɪnʊŋ das ˈbɪldʊŋ ˈvɪçtɪç ɪst]",type:"cümle"},
-      {de:"Können Sie mir bitte helfen?",tr:"Bana yardım edebilir misiniz lütfen?",phonetic:"[ˈkœnən ziː miːɐ ˈbɪtə ˈhɛlfən]",type:"cümle"},
-      {de:"Ich hätte gern einen Kaffee.",tr:"Bir kahve isterdim.",phonetic:"[ɪç ˈhɛtə ɡɛʁn ˈaɪnən kaˈfeː]",type:"cümle"},
-      {de:"Das wäre sehr nett von Ihnen.",tr:"Bu sizden çok nazik olur.",phonetic:"[das ˈvɛːʁə zeːɐ nɛt fɔn ˈiːnən]",type:"cümle"}
-    ]
-  }
-  ]
-},
-// ─── C1.1 ───────────────────────────────────────────────────────
-{
-  id:"c11", label:"C1.1", stages:[
-  {
-    name:"C1 SOYUT KAVRAMLAR", sub:"c11",
-    words:[
-      {de:"die Ambiguität",tr:"muğlaklık / çift anlamlılık",phonetic:"[ambɪɡuɪˈtɛːt]",article:"die"},
-      {de:"die Nuance",tr:"nüans",phonetic:"[nuˈɑ̃ːsə]",article:"die"},
-      {de:"das Paradox",tr:"paradoks",phonetic:"[ˈpaʁadɔks]",article:"das"},
-      {de:"die Kohärenz",tr:"tutarlılık",phonetic:"[koˈhɛːʁɛnts]",article:"die"},
-      {de:"die Abstraktion",tr:"soyutlama",phonetic:"[apstʁakˈtsi̯oːn]",article:"die"},
-      {de:"die Synthese",tr:"sentez",phonetic:"[zʏnˈteːzə]",article:"die"},
-      {de:"die Kausalität",tr:"nedensellik",phonetic:"[kaʊzaliˈtɛːt]",article:"die"},
-      {de:"das Dilemma",tr:"ikilem",phonetic:"[diˈlɛma]",article:"das"},
-      {de:"die Empathie",tr:"empati",phonetic:"[ɛmpaˈtiː]",article:"die"},
-      {de:"die Resilienz",tr:"psikolojik dayanıklılık",phonetic:"[ʁeˈzɪliɛnts]",article:"die"},
-      {de:"implizieren",tr:"ima etmek",phonetic:"[ɪmplɪˈtsiːʁən]"},
-      {de:"widersprechen",tr:"karşı çıkmak / itiraz etmek",phonetic:"[ˈviːdɐˌʃpʁɛçən]"},
-      {de:"differenzieren",tr:"farklılaştırmak",phonetic:"[dɪfɛˈʁɛntsɪˌʁeːn]"},
-      {de:"analysieren",tr:"analiz etmek",phonetic:"[analyˈziːʁən]"},
-      {de:"relativieren",tr:"görecelileştirmek",phonetic:"[ʁelaˈtiːviˌʁeːn]"}
-    ]
-  },
-  {
-    name:"C1 CÜMLELERİ", sub:"c11",
-    type:"cümle",
-    words:[
-      {de:"Es lässt sich nicht leugnen, dass die Globalisierung tiefgreifende Veränderungen bewirkt hat.",tr:"Küreselleşmenin derin değişimlere yol açtığı inkâr edilemez.",phonetic:"[ɛs lɛst zɪç nɪçt ˈlɔɪɡnən]",type:"cümle"},
-      {de:"Inwiefern spiegelt die Sprache das Denken wider?",tr:"Dil, düşünceyi ne ölçüde yansıtır?",phonetic:"[ɪnˈviːfɛʁn ˈʃpiːɡəlt diː ˈʃpʁaːxə das ˈdɛŋkən ˈviːdɐ]",type:"cümle"},
-      {de:"Trotz aller Fortschritte bleiben viele Fragen offen.",tr:"Tüm ilerlemelere rağmen pek çok soru yanıtsız kalmaktadır.",phonetic:"[tʁoːts ˈalɐ ˈfɔʁtʃʁɪtə ˈblaɪbən ˈfiːlə ˈfʁaːɡən ˈɔfən]",type:"cümle"},
-      {de:"Ich würde argumentieren, dass diese Maßnahme kontraproduktiv ist.",tr:"Bu önlemin işe yaramaz olduğunu savunurum.",phonetic:"[ɪç ˈvʏʁdə aʁɡumɛnˈtiːʁən]",type:"cümle"},
-      {de:"Sofern keine bessere Alternative vorliegt, müssen wir diesen Weg wählen.",tr:"Daha iyi bir alternatif yoksa bu yolu seçmeliyiz.",phonetic:"[zoˈfɛʁn ˈkaɪnə ˈbɛsɐ alternatiˈveː ˈfoːɐliːkt]",type:"cümle"}
-    ]
-  }
-  ]
-},
-// ─── C1.2 ───────────────────────────────────────────────────────
-{
-  id:"c12", label:"C1.2", stages:[
-  {
-    name:"C1.2 GELİŞMİŞ KELİMELER", sub:"c12",
-    words:[
-      {de:"die Vieldeutigkeit",tr:"çok anlamlılık",phonetic:"[fiːlˈdɔɪtɪçkaɪt]",article:"die"},
-      {de:"die Sachlichkeit",tr:"nesnellik / olgusallık",phonetic:"[ˈzaxlɪçkaɪt]",article:"die"},
-      {de:"das Fingerspitzengefühl",tr:"incelik / hassasiyet",phonetic:"[ˈfɪŋɐʃpɪtsənɡəfyːl]",article:"das"},
-      {de:"die Nachhaltigkeit",tr:"sürdürülebilirlik",phonetic:"[ˈnaːxˌhaltɪçkaɪt]",article:"die"},
-      {de:"die Weltanschauung",tr:"dünya görüşü",phonetic:"[ˈvɛltˌanʃaʊʊŋ]",article:"die"},
-      {de:"das Heimweh",tr:"sıla özlemi",phonetic:"[ˈhaɪmveː]",article:"das"},
-      {de:"die Schadenfreude",tr:"başkasının mutsuzluğuna sevinme",phonetic:"[ˈʃaːdənˌfʁɔɪdə]",article:"die"},
-      {de:"der Zeitgeist",tr:"dönemin ruhu",phonetic:"[ˈtsaɪtˌɡaɪst]",article:"der"},
-      {de:"das Wunderkind",tr:"dahi çocuk",phonetic:"[ˈvʊndɐˌkɪnt]",article:"das"},
-      {de:"das Bildungsbürgertum",tr:"eğitimli orta sınıf",phonetic:"[ˈbɪldʊŋsˌbʏʁɡɐtuːm]",article:"das"},
-      {de:"hinterfragen",tr:"sorgulamak",phonetic:"[ˈhɪntɐˌfʁaːɡən]"},
-      {de:"verinnerlichen",tr:"içselleştirmek",phonetic:"[fɛɐˈɪnɐlɪçən]"},
-      {de:"voraussetzen",tr:"öngörmek / varsaymak",phonetic:"[foˈʁaʊsˌzɛtsən]"},
-      {de:"berücksichtigen",tr:"göz önünde bulundurmak",phonetic:"[bəˈʁʏkzɪçtɪɡən]"},
-      {de:"veranschaulichen",tr:"somutlaştırmak",phonetic:"[fɛɐˈanʃaʊlɪçən]"}
-    ]
-  },
-  {
-    name:"C1.2 CÜMLELERİ", sub:"c12",
-    type:"cümle",
-    words:[
-      {de:"Was auf den ersten Blick simpel erscheint, erweist sich bei näherer Betrachtung als äußerst komplex.",tr:"İlk bakışta basit görünen şey, yakından incelendiğinde son derece karmaşık olduğunu ortaya koyar.",phonetic:"[vas aʊf deːn ˈɛʁstən blɪk ˈzɪmpəl ɛɐˈʃaɪnt]",type:"cümle"},
-      {de:"Die Kunst liegt darin, die richtige Balance zwischen Theorie und Praxis zu finden.",tr:"Asıl beceri, teori ile pratik arasında doğru dengeyi bulmaktadır.",phonetic:"[diː kʊnst liːkt daˈʁɪn diː ˈʁɪçtɪɡə baˈlɑːnsə]",type:"cümle"},
-      {de:"Ich kann mir vorstellen, dass diese Entscheidung langfristige Konsequenzen haben wird.",tr:"Bu kararın uzun vadeli sonuçları olacağını öngörebiliyorum.",phonetic:"[ɪç kan miːɐ foˈʁaʊsˌvɪzən]",type:"cümle"}
-    ]
-  }
-  ]
-},
-// ─── C2.1 ───────────────────────────────────────────────────────
-{
-  id:"c21", label:"C2.1", stages:[
-  {
-    name:"C2 MASTER KELİMELER", sub:"c21",
-    words:[
-      {de:"die Abgeklärtheit",tr:"olgunluk / soğukkanlılık",phonetic:"[apɡəˈklɛːɐthaɪt]",article:"die"},
-      {de:"die Selbstverständlichkeit",tr:"doğallık / apaçıklık",phonetic:"[zɛlpstfɛɐˈʃtɛntlɪçkaɪt]",article:"die"},
-      {de:"die Unverfrorenheit",tr:"utanmazlık / yüzsüzlük",phonetic:"[ʊnfɛɐˈfʁoːʁənhaɪt]",article:"die"},
-      {de:"die Gleichgültigkeit",tr:"ilgisizlik / kayıtsızlık",phonetic:"[ˈɡlaɪçˌɡʏltɪçkaɪt]",article:"die"},
-      {de:"die Unbeständigkeit",tr:"değişkenlik / istikrarsızlık",phonetic:"[ʊnbəˈʃtɛndɪçkaɪt]",article:"die"},
-      {de:"das Aufbegehren",tr:"isyan / başkaldırı",phonetic:"[ˈaʊfbəˌɡeːʁən]",article:"das"},
-      {de:"die Spitzfindigkeit",tr:"kılı kırk yarma / derin incelik",phonetic:"[ˈʃpɪtsfɪndɪçkaɪt]",article:"die"},
-      {de:"die Hinterlist",tr:"hile / sinsilik",phonetic:"[ˈhɪntɐlɪst]",article:"die"},
-      {de:"das Hintersinn",tr:"gizli anlam / derin mana",phonetic:"[ˈhɪntɐzɪn]",article:"das"},
-      {de:"die Akribie",tr:"titizlik / hassaslık",phonetic:"[akʁiˈbiː]",article:"die"},
-      {de:"verfeinern",tr:"rafine etmek / geliştirmek",phonetic:"[fɛɐˈfaɪnɐn]"},
-      {de:"entlarven",tr:"ifşa etmek / maskesini düşürmek",phonetic:"[ɛntˈlaʁfən]"},
-      {de:"durchleuchten",tr:"ışık tutmak / derinlemesine incelemek",phonetic:"[ˈdʊʁçˌlɔɪçtən]"},
-      {de:"sich zurechtfinden",tr:"yolunu bulmak / uyum sağlamak",phonetic:"[zɪç tsuˈʁɛçtˌfɪndən]"},
-      {de:"in Frage stellen",tr:"sorgulamak",phonetic:"[ɪn ˈfʁaːɡə ˈʃtɛlən]"}
-    ]
-  },
-  {
-    name:"C2.1 İLERİ CÜMLELERİ", sub:"c21",
-    type:"cümle",
-    words:[
-      {de:"Es wäre verfehlt, diese Entwicklung auf einen einzigen Faktor zurückzuführen.",tr:"Bu gelişmeyi tek bir faktöre bağlamak hatalı olur.",phonetic:"[ɛs ˈvɛːʁə fɛɐˈfeːlt diːzə ɛntˈvɪklʊŋ]",type:"cümle"},
-      {de:"Wir bewegen uns hier auf sehr dünnem Eis.",tr:"Burada çok ince bir buzun üzerinde yürüyoruz. (mecaz)",phonetic:"[viːɐ bəˈveːɡən ʊns hiːɐ aʊf zeːɐ ˈdʏnəm aɪs]",type:"cümle"},
-      {de:"Diese Aussage ist mit Vorsicht zu genießen.",tr:"Bu ifadenin ihtiyatla karşılanması gerekir.",phonetic:"[diːzə ˈaʊsˌzaːɡə ɪst mɪt ˈfoːɐzɪçt tsuː ɡəˈniːsən]",type:"cümle"},
-      {de:"Das schlägt dem Fass den Boden aus.",tr:"Bu bardağı taşıran son damladır.",phonetic:"[das ʃlɛːkt deːm fas deːn ˈboːdən aʊs]",type:"cümle"},
-      {de:"Man muss das Ganze im Kontext betrachten.",tr:"Bütünü bağlamı içinde değerlendirmek gerekir.",phonetic:"[man mʊs das ˈɡantsə ɪm kɔnˈtɛkst bəˈtʁaxtən]",type:"cümle"}
-    ]
-  }
-  ]
-},
-// ─── C2.2 ───────────────────────────────────────────────────────
-{
-  id:"c22", label:"C2.2", stages:[
-  {
-    name:"C2 ATASÖZÜ & DEYİMLER", sub:"c22",
-    type:"deyim",
-    words:[
-      {de:"Ohne Fleiß kein Preis.",tr:"Emeksiz yemek olmaz.",phonetic:"[ˈoːnə flaɪs kaɪn pʁaɪs]",type:"deyim"},
-      {de:"Aller Anfang ist schwer.",tr:"Her başlangıç zordur.",phonetic:"[ˈalɐ ˈanfaŋ ɪst ʃveːɐ]",type:"deyim"},
-      {de:"Übung macht den Meister.",tr:"İnsan ustalığı pratikle kazanır.",phonetic:"[ˈyːbʊŋ maxt deːn ˈmaɪstɐ]",type:"deyim"},
-      {de:"Was Hänschen nicht lernt, lernt Hans nimmermehr.",tr:"Küçükte öğrenilmeyen büyükte öğrenilmez.",phonetic:"[vas ˈhɛnzçən nɪçt lɛʁnt lɛʁnt hans ˈnɪmɐmeːɐ]",type:"deyim"},
-      {de:"Der Apfel fällt nicht weit vom Stamm.",tr:"Elma ağacın dibine düşer.",phonetic:"[deːɐ ˈapfəl fɛlt nɪçt vaɪt fɔm ʃtam]",type:"deyim"},
-      {de:"Viele Köche verderben den Brei.",tr:"Aşçı çok olunca yemek berbat olur.",phonetic:"[ˈfiːlə ˈkœçə fɛɐˈdɛʁbən deːn bʁaɪ]",type:"deyim"},
-      {de:"Morgenstund hat Gold im Mund.",tr:"Erken kalkan yol alır.",phonetic:"[ˈmɔʁɡənʃtʊnt hat ɡɔlt ɪm mʊnt]",type:"deyim"},
-      {de:"Wer wagt, gewinnt.",tr:"Göze alan kazanır.",phonetic:"[veːɐ vaːkt ɡəˈvɪnt]",type:"deyim"},
-      {de:"Man soll den Tag nicht vor dem Abend loben.",tr:"Akşamdan sabaha iş çevrilmez.",phonetic:"[man zɔl deːn taːk nɪçt foːɐ deːm ˈaːbənt ˈloːbən]",type:"deyim"},
-      {de:"Ende gut, alles gut.",tr:"Son gülen iyi güler.",phonetic:"[ˈɛndə ɡuːt ˈalɐs ɡuːt]",type:"deyim"}
-    ]
-  },
-  {
-    name:"C2 USTALAMA CÜMLELERİ", sub:"c22",
-    type:"cümle",
-    words:[
-      {de:"Die Sprache ist das Haus des Seins.",tr:"Dil, varlığın evidir. (Heidegger)",phonetic:"[diː ˈʃpʁaːxə ɪst das haʊs dɛs zaɪns]",type:"cümle"},
-      {de:"Grenzen meiner Sprache bedeuten die Grenzen meiner Welt.",tr:"Dilimin sınırları dünyamın sınırlarıdır. (Wittgenstein)",phonetic:"[ˈɡʁɛntsən ˈmaɪnɐ ˈʃpʁaːxə bəˈdɔɪtən diː ˈɡʁɛntsən ˈmaɪnɐ vɛlt]",type:"cümle"},
-      {de:"Man lebt nur einmal, aber wenn man es richtig macht, reicht einmal.",tr:"İnsan yalnızca bir kez yaşar; ama bunu doğru yaparsa bir kez yeterlidir.",phonetic:"[man leːpt nuːɐ ˈaɪnmaːl aːbɐ vɛn man ɛs ˈrɪçtɪç maxt ˈʁaɪçt ˈaɪnmaːl]",type:"cümle"},
-      {de:"Wer fremde Sprachen nicht kennt, weiß nichts von seiner eigenen.",tr:"Yabancı dilleri bilmeyen kendi dilinden de habersizdir. (Goethe)",phonetic:"[veːɐ ˈfʁɛmdə ˈʃpʁaːxən nɪçt kɛnt vaɪs nɪçts fɔn ˈzaɪnɐ ˈaɪɡənən]",type:"cümle"},
-      {de:"Das Geheimnis des Könnens liegt im Wollen.",tr:"Yapabilmenin sırrı istemekte yatar.",phonetic:"[das ɡəˈhaɪmnɪs dɛs ˈkœnəns liːkt ɪm ˈvɔlən]",type:"cümle"}
-    ]
-  }
-  ]
-}
+  { id:"a11", label:"A1.1", name:"Temel Başlangıç" },
+  { id:"a12", label:"A1.2", name:"Başlangıç" },
+  { id:"b11", label:"B1.1", name:"Orta Alt" },
+  { id:"b12", label:"B1.2", name:"Orta" },
+  { id:"c11", label:"C1.1", name:"İleri Alt" },
+  { id:"c12", label:"C1.2", name:"İleri" },
+  { id:"c21", label:"C2.1", name:"Ustalık Alt" },
+  { id:"c22", label:"C2.2", name:"Ustalık" }
 ];
 
-// ═══════════════════════════════════════════════════════════════
-//  FLATTEN STAGES
-// ═══════════════════════════════════════════════════════════════
-const ALL_STAGES = [];
-LEVELS.forEach(lv=>{
-  lv.stages.forEach(st=>{
-    ALL_STAGES.push({...st, levelId:lv.id, levelLabel:lv.label});
-  });
-});
+// ════════════════════════════════════════════════════════════
+// DB — localStorage önce, yoksa veritabani.js
+// ════════════════════════════════════════════════════════════
+const DB = {
+  key(lvId) { return 'koko_db_' + lvId; },
+  load(lvId) {
+    try {
+      const raw = localStorage.getItem(this.key(lvId));
+      if (raw !== null) return JSON.parse(raw);
+    } catch(e) {}
+    // fall back to veritabani.js default
+    const def = (typeof veriGetir === 'function') ? veriGetir(lvId) : [];
+    this.save(lvId, def);
+    return def;
+  },
+  save(lvId, ws) { try { localStorage.setItem(this.key(lvId), JSON.stringify(ws)); } catch(e) {} },
+  add(lvId, w)   { const ws = this.load(lvId); ws.push(w); this.save(lvId, ws); },
+  del(lvId, i)   { const ws = this.load(lvId); ws.splice(i,1); this.save(lvId, ws); }
+};
 
-// ═══════════════════════════════════════════════════════════════
-//  APP
-// ═══════════════════════════════════════════════════════════════
-class KokoApp {
-  constructor(){
-    this.stageIdx = 0;
-    this.wordIdx  = 0;
-    this.correct  = 0;
-    this.attempts = 0;
-    this.streak   = 0;
-    this.daily    = 0;
-    this.totalDone= 0;
-    this.synth    = window.speechSynthesis;
-    this.deVoice  = null;
-    this.trVoice  = null;
-    this.recog    = null;
-    this.listening= false;
-    this.speaking = false;
-    this.timer    = null;
-    this.seconds  = 0;
-    this.started  = false;
+// ════════════════════════════════════════════════════════════
+// APP
+// ════════════════════════════════════════════════════════════
+const App = (function() {
+  let lvId='a11', wIdx=0, correct=0, attempts=0, streak=0, daily=0, total=0;
+  let words=[], started=false, speaking=false, listening=false, secs=0;
+  let deV=null, trV=null;
+  let recog=null, recogRunning=false, restartTimer=null;
+  const synth = window.speechSynthesis;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    this.buildLevelPicker();
-    this.loadProgress();
-    this.setupVoices();
-    this.setupRecog();
-    this.renderWord();
-    this.startTimer();
-  }
+  function $(id) { return document.getElementById(id); }
 
-  buildLevelPicker(){
-    const sel = document.getElementById('levelPicker');
-    LEVELS.forEach(lv=>{
+  /* ── INIT ──────────────────────────────── */
+  function init() {
+    // level select
+    const sel = $('lvSel');
+    LEVELS.forEach(m => {
       const o = document.createElement('option');
-      o.value = lv.id;
-      o.textContent = lv.label;
+      o.value = m.id;
+      o.textContent = m.label + ' ' + m.name;
       sel.appendChild(o);
     });
-  }
 
-  loadProgress(){
-    try{
-      const s = localStorage.getItem('koko_progress');
-      if(s){
-        const d = JSON.parse(s);
-        this.stageIdx  = Math.min(d.stageIdx||0, ALL_STAGES.length-1);
-        this.wordIdx   = Math.min(d.wordIdx||0, ALL_STAGES[this.stageIdx].words.length-1);
-        this.correct   = d.correct||0;
-        this.totalDone = d.totalDone||0;
-        document.getElementById('levelPicker').value = ALL_STAGES[this.stageIdx].levelId;
-      }
-    }catch(e){}
-  }
+    if (!SR) {
+      $('no-recog-banner').classList.add('show');
+    }
 
-  saveProgress(){
-    try{
-      localStorage.setItem('koko_progress', JSON.stringify({
-        stageIdx:this.stageIdx, wordIdx:this.wordIdx,
-        correct:this.correct, totalDone:this.totalDone
-      }));
-      const b = document.getElementById('saveBadge');
-      b.classList.add('show');
-      setTimeout(()=>b.classList.remove('show'), 2000);
-    }catch(e){}
-  }
+    loadProg();
+    setupVoices();
+    render();
 
-  setupVoices(){
-    if(!this.synth) return;
-    const load=()=>{
-      const vs = this.synth.getVoices();
-      this.deVoice = vs.find(v=>v.lang==='de-DE')
-                  || vs.find(v=>v.lang.startsWith('de'))
-                  || vs.find(v=>v.name.toLowerCase().includes('german'))
-                  || null;
-      this.trVoice = vs.find(v=>v.lang==='tr-TR')
-                  || vs.find(v=>v.name.toLowerCase().includes('turkish'))
-                  || null;
-    };
-    this.synth.onvoiceschanged = load;
-    load(); setTimeout(load, 1500);
-  }
-
-  speak(text, lang){
-    return new Promise(res=>{
-      if(!this.synth){res();return;}
-      this.synth.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.rate  = lang.includes('de') ? 0.8 : 0.9;
-      u.pitch = 1.0;
-      if(lang.includes('de') && this.deVoice){u.voice=this.deVoice;u.lang='de-DE';}
-      else if(lang.includes('tr') && this.trVoice){u.voice=this.trVoice;u.lang='tr-TR';}
-      else u.lang = lang;
-      u.onend = ()=>res();
-      u.onerror= ()=>res();
-      this.synth.speak(u);
+    // keyboard shortcuts
+    document.addEventListener('keydown', e => {
+      if (!started) return;
+      if (e.key === 'ArrowRight') { skip(); }
+      if (e.key === 'ArrowLeft')  { repeat(); }
     });
-  }
 
-  setupRecog(){
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if(!SR) return;
-    this.recog = new SR();
-    this.recog.continuous = false;
-    this.recog.interimResults = false;
-    this.recog.lang = 'de-DE';
-
-    this.recog.onresult = e=>{
-      const txt = e.results[0][0].transcript.toLowerCase().trim();
-      console.log('🎙️ Duyulan:', txt);
-      this.handleResponse(txt);
-    };
-    this.recog.onerror = ()=>{ this.listening=false; this.setListening(false); };
-    this.recog.onend   = ()=>{ this.listening=false; this.setListening(false); };
-  }
-
-  startListen(){
-    if(!this.recog || this.listening || this.speaking) return;
-    this.recog.lang = 'de-DE';
-    this.listening = true;
-    this.setListening(true);
-    this.showMsg('Sıra sizde… tekrar edin', 'li');
-    try{ this.recog.start(); }catch(e){ this.listening=false; }
-  }
-
-  stopListen(){
-    if(!this.recog) return;
-    try{ this.recog.stop(); }catch(e){}
-    this.listening=false;
-    this.setListening(false);
-  }
-
-  handleResponse(txt){
-    this.stopListen();
-
-    // commands
-    if(txt.includes('geç')||txt.includes('atla')||txt.includes('skip')){
-      this.nextWord(); return;
-    }
-    if(txt.includes('tekrar')||txt.includes('repeat')){
-      this.speakCurrent(); return;
-    }
-    if(txt.includes('anla')||txt.includes('anlam')){
-      this.showMeaning(); return;
-    }
-    if(txt.includes('kaydet')||txt.includes('save')){
-      this.saveProgress(); setTimeout(()=>this.speakCurrent(),1200); return;
-    }
-    if(txt.includes('yeniden başla')||txt.includes('sıfırla')){
-      this.wordIdx=0; this.renderWord(); this.speakCurrent(); return;
-    }
-
-    // check pronunciation
-    const st = ALL_STAGES[this.stageIdx];
-    const w  = st.words[this.wordIdx];
-    const target = w.de.toLowerCase();
-    const sim = this.similarity(txt, target);
-    const exact = txt.includes(target) || target.includes(txt);
-
-    if(sim > 0.60 || exact){
-      this.handleCorrect();
-    } else {
-      this.attempts++;
-      this.streak=0;
-      this.showMsg(`Duyulan: "${txt}" — Tekrar deneyin`, 'err');
-      this.updateStats();
-      setTimeout(()=>this.startListen(), 2000);
-    }
-  }
-
-  async handleCorrect(){
-    this.correct++;
-    this.attempts++;
-    this.streak++;
-    this.daily++;
-    this.totalDone++;
-    this.updateStats();
-
-    this.showMsg('Mükemmel! ✅', 'ok');
-    this.setOk(true);
-    this.confetti();
-    this.showMeaning();
-
-    const w = ALL_STAGES[this.stageIdx].words[this.wordIdx];
-    this.speaking=true; this.setSpeaking(true);
-    await this.speak(w.tr, 'tr-TR');
-    this.speaking=false; this.setSpeaking(false);
-    this.setOk(false);
-
-    // auto-save every 5 correct
-    if(this.correct % 5 === 0) this.saveProgress();
-
-    setTimeout(()=>this.nextWord(), 800);
-  }
-
-  showMeaning(){
-    const el = document.getElementById('trWord');
-    el.textContent = ALL_STAGES[this.stageIdx].words[this.wordIdx].tr;
-    el.classList.add('show');
-  }
-
-  nextWord(){
-    const st = ALL_STAGES[this.stageIdx];
-    this.wordIdx++;
-    if(this.wordIdx >= st.words.length){
-      // advance stage
-      this.stageIdx = Math.min(this.stageIdx+1, ALL_STAGES.length-1);
-      this.wordIdx  = 0;
-      this.saveProgress();
-      // update picker
-      document.getElementById('levelPicker').value = ALL_STAGES[this.stageIdx].levelId;
-    }
-    this.renderWord();
-    setTimeout(()=>this.speakCurrent(), 500);
-  }
-
-  prevStage(){
-    if(this.stageIdx <= 0) return;
-    this.stageIdx--;
-    this.wordIdx=0;
-    document.getElementById('levelPicker').value = ALL_STAGES[this.stageIdx].levelId;
-    this.renderWord();
-    setTimeout(()=>this.speakCurrent(), 400);
-  }
-
-  nextStage(){
-    if(this.stageIdx >= ALL_STAGES.length-1) return;
-    this.stageIdx++;
-    this.wordIdx=0;
-    document.getElementById('levelPicker').value = ALL_STAGES[this.stageIdx].levelId;
-    this.renderWord();
-    setTimeout(()=>this.speakCurrent(), 400);
-  }
-
-  changeLevel(levelId){
-    const idx = ALL_STAGES.findIndex(s=>s.levelId===levelId);
-    if(idx>=0){ this.stageIdx=idx; this.wordIdx=0; this.renderWord(); setTimeout(()=>this.speakCurrent(),400); }
-  }
-
-  renderWord(){
-    const st = ALL_STAGES[this.stageIdx];
-    const w  = st.words[this.wordIdx];
-
-    document.getElementById('stageName').textContent = st.levelLabel + ' – ' + st.name;
-    document.getElementById('stageSub').textContent  = st.sub ? st.sub.toUpperCase() : '';
-    document.getElementById('idxTxt').textContent    = this.wordIdx + 1;
-    document.getElementById('totalTxt').textContent  = st.words.length;
-    const pct = ((this.wordIdx+1)/st.words.length*100).toFixed(1);
-    document.getElementById('progressFill').style.width = pct+'%';
-
-    // type tag
-    const tt = w.type || 'kelime';
-    document.getElementById('typeTag').textContent = tt.toUpperCase();
-    document.getElementById('typeTag').style.borderColor = tt==='cümle'?'var(--yellow)':tt==='harf'?'var(--green)':tt==='deyim'?'var(--red)':'var(--border)';
-    document.getElementById('typeTag').style.color = tt==='cümle'?'var(--yellow)':tt==='harf'?'var(--green)':tt==='deyim'?'var(--red)':'var(--cyan)';
-
-    // article
-    const artEl = document.getElementById('artSpan');
-    if(w.article){ artEl.textContent=w.article; artEl.style.display='inline'; }
-    else artEl.style.display='none';
-
-    document.getElementById('deWord').textContent   = w.de;
-    document.getElementById('phonetic').textContent = w.phonetic||'';
-
-    const trEl = document.getElementById('trWord');
-    trEl.textContent=''; trEl.classList.remove('show');
-
-    this.showMsg('','');
-
-    // nav buttons
-    document.getElementById('prevBtn').disabled = (this.stageIdx===0);
-    document.getElementById('nextBtn').disabled = (this.stageIdx===ALL_STAGES.length-1);
-
-    this.updateStats();
-  }
-
-  async speakCurrent(){
-    if(!this.started) return;
-    const st = ALL_STAGES[this.stageIdx];
-    const w  = st.words[this.wordIdx];
-    const txt = w.article ? `${w.article} ${w.de}` : w.de;
-
-    this.speaking=true; this.setSpeaking(true);
-    this.showMsg('Dinleyin…', 'sp');
-    await this.speak(txt, 'de-DE');
-    this.speaking=false; this.setSpeaking(false);
-    setTimeout(()=>this.startListen(), 300);
-  }
-
-  start(){
-    document.getElementById('overlay').classList.add('gone');
-    this.started=true;
-    setTimeout(()=>this.speakCurrent(), 700);
-  }
-
-  // ─── UI helpers
-  setSpeaking(v){
-    const core=document.getElementById('core');
-    const r1=document.getElementById('r1'), r2=document.getElementById('r2'), r3=document.getElementById('r3');
-    const dot=document.getElementById('dot');
-    core.classList.toggle('sp',v);
-    [r1,r2,r3].forEach(r=>r.classList.toggle('sp',v));
-    dot.classList.toggle('sp',v);
-    if(v){ core.textContent='🔊'; document.getElementById('statusTxt').textContent='Konuşuyor'; }
-    else { if(!this.listening){ core.textContent='🎙️'; document.getElementById('statusTxt').textContent='Hazır'; } }
-  }
-
-  setListening(v){
-    const core=document.getElementById('core');
-    const r1=document.getElementById('r1'), r2=document.getElementById('r2'), r3=document.getElementById('r3');
-    const dot=document.getElementById('dot');
-    core.classList.toggle('li',v);
-    [r1,r2,r3].forEach(r=>r.classList.toggle('li',v));
-    dot.classList.toggle('li',v);
-    if(v){ core.textContent='🎙️'; document.getElementById('statusTxt').textContent='Dinliyor'; }
-    else { core.textContent='🎙️'; document.getElementById('statusTxt').textContent='Hazır'; }
-  }
-
-  setOk(v){
-    document.getElementById('core').classList.toggle('ok',v);
-    document.getElementById('dot').classList.toggle('ok',v);
-  }
-
-  showMsg(text, type){
-    const el = document.getElementById('statusMsg');
-    el.textContent=text;
-    el.className='status-msg'+(text?' show':'');
-    if(type) el.classList.add(type);
-  }
-
-  updateStats(){
-    document.getElementById('correctVal').textContent  = this.correct;
-    document.getElementById('streakVal').textContent   = this.streak;
-    document.getElementById('dailyVal').textContent    = this.daily;
-    document.getElementById('totalDoneVal').textContent= this.totalDone;
-    const acc = this.attempts>0 ? Math.round(this.correct/this.attempts*100)+'%' : '–';
-    document.getElementById('accuracyVal').textContent = acc;
-  }
-
-  startTimer(){
-    this.timer = setInterval(()=>{
-      this.seconds++;
-      const m = String(Math.floor(this.seconds/60)).padStart(2,'0');
-      const s = String(this.seconds%60).padStart(2,'0');
-      document.getElementById('timerVal').textContent = m+':'+s;
+    // timer
+    setInterval(() => {
+      secs++;
+      const m = String(Math.floor(secs/60)).padStart(2,'0');
+      const s = String(secs%60).padStart(2,'0');
+      $('tmr').textContent = m + ':' + s;
     }, 1000);
   }
 
-  confetti(){
-    const colors=['#e63946','#4cc9f0','#06d6a0','#ffd166','#f4a261'];
-    for(let i=0;i<20;i++){
-      const c=document.createElement('div');
-      c.className='confetti-piece';
-      c.style.cssText=`left:${Math.random()*100}vw;top:${Math.random()*30}vh;background:${colors[Math.floor(Math.random()*colors.length)]};animation-delay:${Math.random()*0.5}s;border-radius:${Math.random()>0.5?'50%':'2px'};`;
-      document.body.appendChild(c);
-      setTimeout(()=>c.remove(), 2800);
+  /* ── PROGRESS ──────────────────────────── */
+  function loadProg() {
+    try {
+      const d = JSON.parse(localStorage.getItem('koko_prog') || '{}');
+      lvId   = d.lvId   || 'a11';
+      wIdx   = d.wIdx   || 0;
+      correct= d.correct|| 0;
+      total  = d.total  || 0;
+      $('lvSel').value = lvId;
+    } catch(e) {}
+    words = DB.load(lvId);
+    wIdx  = Math.min(wIdx, Math.max(0, words.length - 1));
+  }
+
+  function saveProg() {
+    try { localStorage.setItem('koko_prog', JSON.stringify({lvId,wIdx,correct,total})); } catch(e) {}
+  }
+
+  /* ── VOICES ────────────────────────────── */
+  function setupVoices() {
+    if (!synth) return;
+    const load = () => {
+      const vs = synth.getVoices();
+      // Prefer high-quality German voices
+      deV = vs.find(v => v.lang === 'de-DE' && v.name.includes('Google'))
+          || vs.find(v => v.lang === 'de-DE')
+          || vs.find(v => v.lang.startsWith('de'))
+          || null;
+      trV = vs.find(v => v.lang === 'tr-TR')
+          || vs.find(v => v.name.toLowerCase().includes('turkish'))
+          || null;
+    };
+    synth.onvoiceschanged = load;
+    load();
+    setTimeout(load, 500);
+    setTimeout(load, 1500);
+  }
+
+  /* ── SPEAK ─────────────────────────────── */
+  function speak(text, lang) {
+    return new Promise(res => {
+      if (!synth) { res(); return; }
+      synth.cancel();
+      if (synth.paused) synth.resume();
+
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate  = lang.includes('de') ? 0.82 : 0.9;
+      u.pitch = 1.0;
+      u.volume= 1.0;
+
+      if (lang.includes('de') && deV) { u.voice = deV; u.lang = 'de-DE'; }
+      else if (lang.includes('tr') && trV) { u.voice = trV; u.lang = 'tr-TR'; }
+      else u.lang = lang;
+
+      // iOS keep-alive + fallback timeout
+      const maxMs = Math.max(3000, text.length * 120 + 1500);
+      const fallback = setTimeout(() => res(), maxMs);
+      const ka = setInterval(() => { if (synth.speaking) synth.resume(); }, 5000);
+
+      const done = () => { clearTimeout(fallback); clearInterval(ka); res(); };
+      u.onend   = done;
+      u.onerror = done;
+      synth.speak(u);
+    });
+  }
+
+  /* ── SPEECH RECOGNITION ────────────────── */
+  function buildRecog() {
+    if (!SR) return null;
+    const r = new SR();
+    r.continuous      = false;
+    r.interimResults  = false;
+    r.maxAlternatives = 3;   // get top 3 guesses → better matching
+    r.lang            = 'de-DE';
+
+    r.onstart = () => {
+      recogRunning = true;
+      listening    = true;
+      setLi(true);
+      setMsg('Sıra sizde… tekrar edin', 'li');
+    };
+
+    r.onresult = e => {
+      recogRunning = false;
+      // Collect all alternatives from all results
+      const phrases = [];
+      for (let ri = 0; ri < e.results.length; ri++) {
+        for (let ai = 0; ai < e.results[ri].length; ai++) {
+          phrases.push(e.results[ri][ai].transcript.toLowerCase().trim());
+        }
+      }
+      onSpoken(phrases);
+    };
+
+    r.onnomatch = () => {
+      recogRunning = false;
+      listening    = false;
+      setLi(false);
+      setMsg('Anlaşılamadı — tekrar deneyin', 'err');
+      scheduleRestart(1800);
+    };
+
+    r.onerror = ev => {
+      recogRunning = false;
+      listening    = false;
+      setLi(false);
+      console.warn('SR error:', ev.error);
+
+      if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
+        $('micBanner').classList.add('show');
+        setMsg('Mikrofon izni reddedildi', 'err');
+        return; // do not restart
+      }
+      if (ev.error === 'no-speech') {
+        // No speech detected — restart quickly
+        scheduleRestart(400);
+        return;
+      }
+      // network / aborted / other — restart with delay
+      scheduleRestart(1500);
+    };
+
+    r.onend = () => {
+      recogRunning = false;
+      listening    = false;
+      setLi(false);
+      // If we're still in "listening" mode (no result triggered), restart
+      if (started && !speaking) {
+        scheduleRestart(300);
+      }
+    };
+
+    return r;
+  }
+
+  function scheduleRestart(ms) {
+    clearTimeout(restartTimer);
+    if (!started || speaking) return;
+    restartTimer = setTimeout(() => startListen(), ms);
+  }
+
+  function startListen() {
+    clearTimeout(restartTimer);
+    if (!started || speaking || recogRunning) return;
+    if (!SR) { setMsg('Ses tanıma desteklenmiyor — butonları kullanın', 'err'); return; }
+
+    // Always create a fresh instance (required on iOS + avoids state bugs on desktop)
+    recog = buildRecog();
+    if (!recog) return;
+
+    try {
+      recog.start();
+    } catch (e) {
+      console.warn('recog.start failed:', e);
+      recogRunning = false;
+      scheduleRestart(1000);
     }
   }
 
-  similarity(a, b){
-    if(!a.length||!b.length) return 0;
-    const la=a.length, lb=b.length;
-    const m=Array.from({length:la+1},(_,i)=>Array.from({length:lb+1},(_,j)=>i===0?j:j===0?i:0));
-    for(let i=1;i<=la;i++) for(let j=1;j<=lb;j++)
-      m[i][j]=a[i-1]===b[j-1]?m[i-1][j-1]:1+Math.min(m[i-1][j],m[i][j-1],m[i-1][j-1]);
-    let sim = 1 - m[la][lb]/Math.max(la,lb);
-    if(Math.max(la,lb)<=5) sim+=0.15;
-    return Math.min(1,sim);
+  function stopListen() {
+    clearTimeout(restartTimer);
+    if (recog && recogRunning) {
+      try { recog.abort(); } catch(e) {}
+    }
+    recogRunning = false;
+    listening    = false;
+    setLi(false);
   }
-}
 
-const app = new KokoApp();
-window.app = app;
+  /* ── HANDLE SPOKEN INPUT ───────────────── */
+  function onSpoken(phrases) {
+    stopListen();
+
+    // Check every alternative for commands first
+    for (const txt of phrases) {
+      if (txt.includes('geç') || txt.includes('atla') || txt.includes('weiter') || txt.includes('skip')) {
+        skip(); return;
+      }
+      if (txt.includes('tekrar') || txt.includes('wieder') || txt.includes('repeat') || txt.includes('nochmal')) {
+        repeat(); return;
+      }
+    }
+
+    if (!words.length) return;
+    const w = words[wIdx];
+
+    // Build target (strip article)
+    let target = w.de.toLowerCase();
+    if (w.article) {
+      const pfx = w.article.toLowerCase() + ' ';
+      if (target.startsWith(pfx)) target = target.slice(pfx.length);
+    }
+
+    // Check all alternatives
+    let matched = false;
+    for (const txt of phrases) {
+      const sim   = levenshtein(txt, target);
+      const exact = txt.includes(target) || target.includes(txt);
+      if (sim > 0.58 || exact) { matched = true; break; }
+    }
+
+    if (matched) {
+      correctAnswer();
+    } else {
+      attempts++;
+      streak = 0;
+      setMsg(`Duyulan: "${phrases[0]}" — tekrar deneyin`, 'err');
+      updateStats();
+      scheduleRestart(2000);
+    }
+  }
+
+  /* ── CORRECT ───────────────────────────── */
+  async function correctAnswer() {
+    correct++; attempts++; streak++; daily++; total++;
+    updateStats();
+    setMsg('Mükemmel! ✅', 'ok');
+    setOk(true);
+    confetti();
+    showTr();
+
+    speaking = true; setSp(true);
+    await speak(words[wIdx].tr, 'tr-TR');
+    speaking = false; setSp(false); setOk(false);
+
+    if (correct % 5 === 0) saveProg();
+    setTimeout(() => nextWord(), 700);
+  }
+
+  function showTr() {
+    if (!words.length) return;
+    $('trW').textContent = words[wIdx].tr;
+    $('trW').classList.add('show');
+  }
+
+  /* ── NAVIGATION ────────────────────────── */
+  function nextWord() {
+    if (!words.length) return;
+    wIdx = (wIdx + 1) % words.length;
+    render();
+    setTimeout(() => speakCurrent(), 500);
+  }
+
+  function skip()   { stopListen(); nextWord(); }
+  function repeat() { stopListen(); speakCurrent(); }
+
+  function prevLv() {
+    const i = LEVELS.findIndex(m => m.id === lvId);
+    if (i <= 0) return;
+    lvId = LEVELS[i-1].id; wIdx = 0;
+    $('lvSel').value = lvId;
+    words = DB.load(lvId); render();
+    if (started) setTimeout(() => speakCurrent(), 400);
+  }
+
+  function nextLv() {
+    const i = LEVELS.findIndex(m => m.id === lvId);
+    if (i >= LEVELS.length - 1) return;
+    lvId = LEVELS[i+1].id; wIdx = 0;
+    $('lvSel').value = lvId;
+    words = DB.load(lvId); render();
+    if (started) setTimeout(() => speakCurrent(), 400);
+  }
+
+  function changeLevel(id) {
+    lvId = id; wIdx = 0;
+    words = DB.load(lvId); render();
+    if (started) setTimeout(() => speakCurrent(), 400);
+  }
+
+  /* ── RENDER ────────────────────────────── */
+  function render() {
+    words = DB.load(lvId);
+    const lm = LEVELS.find(m => m.id === lvId) || LEVELS[0];
+    $('sname').textContent = lm.label + ' – ' + lm.name;
+
+    const idx = LEVELS.findIndex(m => m.id === lvId);
+    $('prevB').disabled = idx <= 0;
+    $('nextB').disabled = idx >= LEVELS.length - 1;
+
+    if (!words.length) {
+      $('deW').textContent = 'Bu seviyede kelime yok';
+      $('art').style.display = 'none';
+      $('phon').textContent  = '';
+      $('trW').textContent   = '';
+      $('trW').classList.remove('show');
+      $('idxt').textContent  = '0';
+      $('tott').textContent  = '0';
+      $('pfill').style.width = '0%';
+      return;
+    }
+
+    wIdx = Math.min(wIdx, words.length - 1);
+    const w = words[wIdx];
+
+    $('idxt').textContent = wIdx + 1;
+    $('tott').textContent = words.length;
+    $('pfill').style.width = ((wIdx+1)/words.length*100) + '%';
+
+    const tt = w.type || 'kelime';
+    const tb = $('tbadge');
+    tb.textContent  = tt.toUpperCase();
+    tb.className    = 'tbadge ' + tt;
+
+    // Article — strip from de display if duplicate
+    const artEl = $('art');
+    let deD = w.de;
+    if (w.article) {
+      artEl.textContent   = w.article;
+      artEl.style.display = 'inline';
+      const pfx = w.article + ' ';
+      if (deD.startsWith(pfx)) deD = deD.slice(pfx.length);
+    } else {
+      artEl.style.display = 'none';
+    }
+
+    $('deW').textContent = deD;
+    $('phon').textContent = w.phonetic || '';
+    $('trW').textContent  = '';
+    $('trW').classList.remove('show');
+    setMsg('', '');
+    updateStats();
+  }
+
+  /* ── SPEAK CURRENT ─────────────────────── */
+  async function speakCurrent() {
+    if (!started || !words.length) return;
+    stopListen();
+
+    speaking = true; setSp(true);
+    setMsg('Dinleyin…', 'sp');
+
+    await speak(words[wIdx].de, 'de-DE');
+
+    speaking = false; setSp(false);
+    // After speaking, start listening
+    setTimeout(() => startListen(), 400);
+  }
+
+  /* ── START ─────────────────────────────── */
+  async function start() {
+    $('ov').classList.add('gone');
+    started = true;
+
+    // Prime AudioContext on user gesture (important for iOS + desktop)
+    try {
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      await ac.resume();
+    } catch(e) {}
+
+    // Mic permission — ask only once.
+    // After the first successful grant we set a localStorage flag so the
+    // browser dialog never appears again on subsequent visits.
+    const micKey = 'koko_mic_ok';
+    const alreadyGranted = localStorage.getItem(micKey) === '1';
+
+    if (alreadyGranted) {
+      $('micBanner').classList.remove('show');
+    } else {
+      // Silent check via Permissions API (Chrome/Edge/Firefox; not all Safari)
+      let permState = 'prompt';
+      try {
+        if (navigator.permissions && navigator.permissions.query) {
+          const res = await navigator.permissions.query({ name: 'microphone' });
+          permState = res.state; // 'granted' | 'denied' | 'prompt'
+        }
+      } catch(e) { /* Permissions API unavailable — will fall through to getUserMedia */ }
+
+      if (permState === 'granted') {
+        localStorage.setItem(micKey, '1');
+        $('micBanner').classList.remove('show');
+      } else if (permState === 'denied') {
+        $('micBanner').classList.add('show');
+        setMsg('Mikrofon erişimi engelli — tarayıcı ayarlarından izin verin', 'err');
+      } else {
+        // 'prompt' — show browser dialog exactly once
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach(t => t.stop()); // release immediately
+          localStorage.setItem(micKey, '1');
+          $('micBanner').classList.remove('show');
+        } catch(e) {
+          $('micBanner').classList.add('show');
+          setMsg('Mikrofon izni gerekli', 'err');
+        }
+      }
+    }
+
+    setTimeout(() => speakCurrent(), 700);
+  }
+
+  async function requestMic() {
+    // Called from the yellow warning banner
+    const micKey = 'koko_mic_ok';
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(t => t.stop());
+      localStorage.setItem(micKey, '1');
+      $('micBanner').classList.remove('show');
+      if (started && !speaking) startListen();
+    } catch(e) {
+      setMsg('Mikrofon izni reddedildi — tarayıcı site ayarlarını kontrol edin', 'err');
+    }
+  }
+
+  /* ── UI HELPERS ────────────────────────── */
+  function setSp(v) {
+    const o = $('orb'), d = $('dot');
+    ['r1','r2','r3'].forEach(id => {
+      const el = $(id);
+      el.classList.toggle('sp', v);
+      if (v) el.classList.remove('li');
+    });
+    o.classList.toggle('sp', v);
+    if (v) o.classList.remove('li');
+    d.classList.toggle('sp', v);
+    if (v) d.classList.remove('li');
+    if (v) { o.textContent = '🔊'; $('stsTxt').textContent = 'Konuşuyor'; }
+    else if (!listening) { o.textContent = '🎙️'; $('stsTxt').textContent = 'Hazır'; }
+  }
+
+  function setLi(v) {
+    const o = $('orb'), d = $('dot');
+    ['r1','r2','r3'].forEach(id => {
+      const el = $(id);
+      el.classList.toggle('li', v);
+      if (v) el.classList.remove('sp');
+    });
+    o.classList.toggle('li', v);
+    if (v) o.classList.remove('sp');
+    d.classList.toggle('li', v);
+    if (v) d.classList.remove('sp');
+    o.textContent = '🎙️';
+    $('stsTxt').textContent = v ? 'Dinliyor' : 'Hazır';
+  }
+
+  function setOk(v) {
+    $('orb').classList.toggle('ok', v);
+    $('dot').classList.toggle('ok', v);
+  }
+
+  function setMsg(txt, type) {
+    const el = $('smsg');
+    el.textContent = txt;
+    el.className   = 'smsg' + (txt ? ' show' : '');
+    if (type) el.classList.add(type);
+  }
+
+  function updateStats() {
+    $('crrct').textContent = correct;
+    $('strk').textContent  = streak;
+    $('dly').textContent   = daily;
+    $('tot').textContent   = total;
+    $('acc').textContent   = attempts > 0 ? Math.round(correct/attempts*100) + '%' : '–';
+  }
+
+  function confetti() {
+    const cols = ['#e63946','#2563eb','#16a34a','#d97706','#0891b2'];
+    for (let i = 0; i < 18; i++) {
+      const c = document.createElement('div');
+      c.className = 'cf';
+      c.style.cssText = `left:${Math.random()*100}vw;top:${Math.random()*15+5}vh;background:${cols[i%cols.length]};animation-delay:${Math.random()*.4}s;border-radius:${Math.random()>.5?'50%':'2px'};`;
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 2400);
+    }
+  }
+
+  /* ── LEVENSHTEIN SIMILARITY ────────────── */
+  function levenshtein(a, b) {
+    if (!a.length || !b.length) return 0;
+    const la = a.length, lb = b.length;
+    const m = Array.from({length:la+1}, (_,i) => Array.from({length:lb+1}, (_,j) => i===0?j:j===0?i:0));
+    for (let i=1; i<=la; i++)
+      for (let j=1; j<=lb; j++)
+        m[i][j] = a[i-1]===b[j-1] ? m[i-1][j-1] : 1+Math.min(m[i-1][j], m[i][j-1], m[i-1][j-1]);
+    let s = 1 - m[la][lb] / Math.max(la, lb);
+    if (Math.max(la, lb) <= 5) s += 0.14; // boost short words
+    return Math.min(1, s);
+  }
+
+  return { init, start, skip, repeat, changeLevel, prevLv, nextLv, requestMic,
+           reload() { words = DB.load(lvId); render(); } };
+})();
+
+App.init();
 </script>
 </body>
 </html>

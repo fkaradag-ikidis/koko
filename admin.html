@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>koko.app – Admin Paneli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<script src="veritabani.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --red:#e63946;--red-l:#fff0f0;
+  --blue:#2563eb;--blue-l:#eff6ff;
+  --green:#16a34a;--green-l:#f0fdf4;
+  --amber:#d97706;--amber-l:#fffbeb;
+  --g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;
+  --g300:#d1d5db;--g400:#9ca3af;--g500:#6b7280;
+  --g600:#4b5563;--g700:#374151;--g800:#1f2937;--g900:#111827;
+  --white:#fff;
+}
+body{font-family:'Inter',sans-serif;background:var(--g50);color:var(--g800);min-height:100vh;}
+input,select,textarea,button{font-family:'Inter',sans-serif;outline:none;}
+
+/* ── LOGIN ────────────────────────────────── */
+#login-page{position:fixed;inset:0;background:var(--g50);display:flex;align-items:center;justify-content:center;z-index:999;}
+#login-page.hidden{display:none;}
+.login-box{background:var(--white);border:1px solid var(--g200);border-radius:16px;padding:40px 36px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.08);}
+.login-logo{font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:700;color:var(--red);text-align:center;margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--g400);text-align:center;margin-bottom:28px;}
+.login-field{margin-bottom:14px;}
+.login-label{display:block;font-size:11px;font-weight:600;color:var(--g500);letter-spacing:.4px;text-transform:uppercase;margin-bottom:5px;}
+.login-input{width:100%;padding:10px 14px;border:1.5px solid var(--g200);border-radius:8px;font-size:14px;color:var(--g800);background:var(--g50);transition:border .15s;}
+.login-input:focus{border-color:var(--blue);background:var(--white);}
+.login-btn{width:100%;padding:12px;background:var(--red);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px;transition:all .2s;}
+.login-btn:hover{background:#c1121f;}
+.login-err{font-size:12px;color:var(--red);margin-top:10px;text-align:center;min-height:18px;}
+
+/* ── ADMIN SHELL ──────────────────────────── */
+#admin-page{display:none;}
+#admin-page.visible{display:block;}
+
+/* topbar */
+.topbar{background:var(--white);border-bottom:1px solid var(--g200);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:100;}
+.tb-logo{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--g900);}
+.tb-logo em{color:var(--red);font-style:normal;}
+.tb-right{display:flex;align-items:center;gap:10px;}
+.tb-btn{padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--g200);background:var(--white);color:var(--g600);transition:all .15s;}
+.tb-btn:hover{background:var(--g100);}
+.tb-btn.danger{border-color:#fca5a5;color:var(--red);}
+.tb-btn.danger:hover{background:var(--red-l);}
+
+/* content */
+.content{max-width:1100px;margin:0 auto;padding:28px 24px;}
+
+/* section */
+.sec{background:var(--white);border:1px solid var(--g200);border-radius:12px;margin-bottom:20px;overflow:hidden;}
+.sec-hdr{padding:16px 20px;border-bottom:1px solid var(--g100);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.sec-title{font-size:13px;font-weight:700;color:var(--g700);letter-spacing:.3px;text-transform:uppercase;}
+.sec-body{padding:20px;}
+
+/* level tabs */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;}
+.tab{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;background:var(--white);border:1.5px solid var(--g200);color:var(--g500);transition:all .15s;cursor:pointer;}
+.tab:hover{border-color:var(--g400);color:var(--g700);}
+.tab.on{background:var(--red);border-color:var(--red);color:var(--white);}
+.cnt{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:9px;font-size:10px;font-weight:700;margin-left:5px;padding:0 4px;background:rgba(255,255,255,.25);color:rgba(255,255,255,.9);}
+.tab:not(.on) .cnt{background:var(--g100);color:var(--g500);}
+
+/* category tabs */
+.cattabs{display:flex;gap:0;border-bottom:1px solid var(--g100);}
+.cattab{padding:10px 18px;font-size:12px;font-weight:600;color:var(--g400);border-bottom:2.5px solid transparent;cursor:pointer;transition:all .15s;user-select:none;}
+.cattab:hover{color:var(--g700);}
+.cattab.on{color:var(--blue);border-bottom-color:var(--blue);}
+
+/* form */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px;}
+.ff{display:flex;flex-direction:column;gap:4px;}
+.fl{font-size:10px;font-weight:700;color:var(--g500);letter-spacing:.4px;text-transform:uppercase;}
+.fi{padding:8px 11px;border-radius:7px;border:1.5px solid var(--g200);font-size:13px;color:var(--g800);background:var(--g50);transition:border .15s;}
+.fi:focus{border-color:var(--blue);background:var(--white);}
+.fsel{appearance:none;-webkit-appearance:none;cursor:pointer;background:var(--g50) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7280'/%3E%3C/svg%3E") no-repeat right 9px center;padding-right:26px;}
+.fsel:focus{border-color:var(--blue);background:var(--white);}
+.add-btn{padding:8px 20px;border-radius:7px;background:var(--blue);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
+.add-btn:hover{background:#1d4ed8;}
+
+/* word list */
+.list-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+.srch{padding:7px 11px;border-radius:7px;border:1.5px solid var(--g200);font-size:13px;width:240px;background:var(--g50);}
+.srch:focus{border-color:var(--blue);background:var(--white);}
+.list-info{font-size:12px;color:var(--g400);}
+.wlist{display:flex;flex-direction:column;gap:4px;max-height:540px;overflow-y:auto;}
+.wrow{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:7px;background:var(--g50);border:1px solid var(--g100);transition:background .1s;}
+.wrow:hover{background:var(--g100);}
+.wbadge{min-width:56px;padding:2px 8px;border-radius:12px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:var(--g200);color:var(--g600);}
+.wbadge.cümle{background:var(--amber-l);color:var(--amber);}
+.wbadge.harf{background:var(--green-l);color:var(--green);}
+.wbadge.deyim{background:var(--red-l);color:var(--red);}
+.wde{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:var(--g900);flex:1.2;min-width:0;word-break:break-word;}
+.wart{color:var(--blue);font-size:11px;margin-right:3px;}
+.wtr{font-size:12px;color:var(--g500);flex:1;min-width:0;word-break:break-word;}
+.wph{font-size:11px;color:var(--g300);font-family:'Courier New',monospace;flex:.8;min-width:0;word-break:break-all;display:none;}
+@media(min-width:640px){.wph{display:block;}}
+.wdel{min-width:26px;height:26px;border-radius:6px;background:transparent;color:var(--g300);font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;cursor:pointer;border:none;flex-shrink:0;}
+.wdel:hover{background:var(--red-l);color:var(--red);}
+.empty{padding:24px;text-align:center;color:var(--g400);font-size:13px;}
+
+/* password section */
+.pw-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:500px;}
+@media(max-width:480px){.pw-grid{grid-template-columns:1fr;}}
+.pw-btn{padding:9px 20px;border-radius:7px;background:var(--green);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;margin-top:4px;}
+.pw-btn:hover{background:#15803d;}
+.pw-msg{font-size:12px;margin-top:8px;min-height:18px;}
+.pw-msg.ok{color:var(--green);}
+.pw-msg.err{color:var(--red);}
+
+/* seed / reset */
+.seed-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.seed-btn{padding:8px 16px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid;transition:all .15s;}
+.seed-btn.reset{background:var(--red-l);color:var(--red);border-color:#fca5a5;}
+.seed-btn.reset:hover{background:var(--red);color:#fff;}
+.seed-btn.seed{background:var(--blue-l);color:var(--blue);border-color:#bfdbfe;}
+.seed-btn.seed:hover{background:var(--blue);color:#fff;}
+.seed-note{font-size:11px;color:var(--g400);}
+
+/* toast */
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;z-index:9999;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.green{background:var(--green);}
+.toast.red{background:var(--red);}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ════════════════════════════════ -->
+<div id="login-page">
+  <div class="login-box">
+    <div class="login-logo">koko.app</div>
+    <div class="login-sub">Admin Paneli</div>
+    <div class="login-field">
+      <label class="login-label">Kullanıcı Adı</label>
+      <input class="login-input" id="inUser" type="text" placeholder="admin" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-field">
+      <label class="login-label">Şifre</label>
+      <input class="login-input" id="inPass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Giriş Yap</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ══ ADMIN PANEL ═══════════════════════════ -->
+<div id="admin-page">
+
+  <div class="topbar">
+    <div class="tb-logo"><em>koko</em>.app &mdash; Admin Paneli</div>
+    <div class="tb-right">
+      <a class="tb-btn" href="index.html">← Uygulamaya Git</a>
+      <button class="tb-btn danger" onclick="doLogout()">Çıkış</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── KELIME / CÜMLE YÖNETİMİ ───────── -->
+    <div class="sec">
+      <div class="sec-hdr">
+        <div class="sec-title">Kelime & Cümle Yönetimi</div>
+        <div class="tabs" id="lvTabs"></div>
+      </div>
+
+      <!-- Category tabs -->
+      <div class="cattabs">
+        <div class="cattab on" data-cat="harfler" onclick="setCat('harfler')">🔤 Harfler</div>
+        <div class="cattab" data-cat="kelimeler" onclick="setCat('kelimeler')">📖 Kelimeler</div>
+        <div class="cattab" data-cat="cumleler" onclick="setCat('cumleler')">💬 Cümleler & Deyimler</div>
+      </div>
+
+      <div class="sec-body">
+        <!-- Add form -->
+        <div class="sec-title" style="margin-bottom:12px;">Yeni Ekle</div>
+        <div class="fgrid" id="fgrid">
+          <div class="ff"><label class="fl">Almanca</label><input class="fi" id="inDe" placeholder="z.B. die Katze" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+          <div class="ff"><label class="fl">Türkçe</label><input class="fi" id="inTr" placeholder="kedi" autocomplete="off"></div>
+          <div class="ff"><label class="fl">Telaffuz</label><input class="fi" id="inPh" placeholder="[ˈkatsə]" autocomplete="off" spellcheck="false"></div>
+          <div class="ff" id="artField"><label class="fl">Artikel</label>
+            <select class="fi fsel" id="inArt">
+              <option value="">—</option>
+              <option value="der">der</option>
+              <option value="die">die</option>
+              <option value="das">das</option>
+            </select>
+          </div>
+          <div class="ff" id="typeField"><label class="fl">Tür</label>
+            <select class="fi fsel" id="inTyp">
+              <option value="kelime">kelime</option>
+              <option value="cümle">cümle</option>
+              <option value="deyim">deyim</option>
+            </select>
+          </div>
+        </div>
+        <button class="add-btn" onclick="addEntry()">+ Ekle</button>
+
+        <!-- List -->
+        <div class="list-toolbar" style="margin-top:20px;">
+          <div>
+            <div class="sec-title" id="listTitle" style="margin-bottom:0;">Liste</div>
+            <div class="list-info" id="listInfo"></div>
+          </div>
+          <input class="srch" id="srch" placeholder="Ara…" oninput="renderList()">
+        </div>
+        <div class="wlist" id="wlist"></div>
+      </div>
+    </div>
+
+    <!-- ── ŞİFRE DEĞİŞTİR ────────────────── -->
+    <div class="sec">
+      <div class="sec-hdr"><div class="sec-title">Kullanıcı Adı & Şifre</div></div>
+      <div class="sec-body">
+        <div class="pw-grid">
+          <div class="ff"><label class="fl">Yeni Kullanıcı Adı</label><input class="fi" id="newUser" type="text" autocomplete="off"></div>
+          <div class="ff"><label class="fl">Mevcut Şifre</label><input class="fi" id="curPass" type="password" autocomplete="off"></div>
+          <div class="ff"><label class="fl">Yeni Şifre</label><input class="fi" id="newPass" type="password" autocomplete="new-password"></div>
+          <div class="ff"><label class="fl">Yeni Şifre (tekrar)</label><input class="fi" id="newPass2" type="password" autocomplete="new-password"></div>
+        </div>
+        <button class="pw-btn" onclick="changeCredentials()">Kaydet</button>
+        <div class="pw-msg" id="pwMsg"></div>
+      </div>
+    </div>
+
+    <!-- ── VERİTABANI YÖNETİMİ ───────────── -->
+    <div class="sec">
+      <div class="sec-hdr"><div class="sec-title">Veritabanı İşlemleri</div></div>
+      <div class="sec-body">
+        <div class="seed-row">
+          <button class="seed-btn seed" onclick="seedDefaults()">🔄 Varsayılan Verileri Yükle (veritabani.js)</button>
+          <button class="seed-btn reset" onclick="resetLevel()">⚠️ Bu Seviyeyi Sıfırla</button>
+          <button class="seed-btn reset" onclick="resetAll()">🗑 Tüm Seviyeleri Sıfırla</button>
+        </div>
+        <div class="seed-note" style="margin-top:10px;">
+          "Varsayılan Verileri Yükle" seçili seviyeye veritabani.js'deki orijinal verileri ekler (mevcut veriler korunur).<br>
+          "Sıfırla" işlemleri geri alınamaz.
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /admin-page -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════════════════
+const LEVELS = [
+  { id:"a11", label:"A1.1", name:"Temel Başlangıç" },
+  { id:"a12", label:"A1.2", name:"Başlangıç" },
+  { id:"b11", label:"B1.1", name:"Orta Alt" },
+  { id:"b12", label:"B1.2", name:"Orta" },
+  { id:"c11", label:"C1.1", name:"İleri Alt" },
+  { id:"c12", label:"C1.2", name:"İleri" },
+  { id:"c21", label:"C2.1", name:"Ustalık Alt" },
+  { id:"c22", label:"C2.2", name:"Ustalık" }
+];
+
+const CATS = { harfler:"HARF", kelimeler:"KELIME", cumleler:"CÜMLE/DEYİM" };
+
+// ════════════════════════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════════════════════════
+const Auth = {
+  key: 'koko_admin_creds',
+  default_user: 'admin',
+  default_pass: 'koko2024',
+  getCreds() {
+    try { return JSON.parse(localStorage.getItem(this.key)) || { user: this.default_user, pass: this.default_pass }; } catch(e) {}
+    return { user: this.default_user, pass: this.default_pass };
+  },
+  setCreds(u, p) { localStorage.setItem(this.key, JSON.stringify({user:u,pass:p})); },
+  check(u, p) { const c = this.getCreds(); return u === c.user && p === c.pass; }
+};
+
+const SESSION_KEY = 'koko_admin_session';
+function isLoggedIn() { return sessionStorage.getItem(SESSION_KEY) === '1'; }
+function doLogin() {
+  const u = document.getElementById('inUser').value.trim();
+  const p = document.getElementById('inPass').value;
+  if (Auth.check(u, p)) {
+    sessionStorage.setItem(SESSION_KEY, '1');
+    document.getElementById('loginErr').textContent = '';
+    showAdmin();
+  } else {
+    document.getElementById('loginErr').textContent = 'Kullanıcı adı veya şifre yanlış.';
+    document.getElementById('inPass').value = '';
+  }
+}
+function doLogout() {
+  sessionStorage.removeItem(SESSION_KEY);
+  location.reload();
+}
+function showAdmin() {
+  document.getElementById('login-page').classList.add('hidden');
+  document.getElementById('admin-page').classList.add('visible');
+  Adm.init();
+}
+
+// ════════════════════════════════════════════════════════════
+// DB
+// ════════════════════════════════════════════════════════════
+const DB = {
+  _key(lvId, cat) { return `koko_db_${lvId}_${cat}`; },
+
+  load(lvId, cat) {
+    try {
+      const raw = localStorage.getItem(this._key(lvId, cat));
+      if (raw !== null) return JSON.parse(raw);
+    } catch(e) {}
+    // seed from veritabani.js
+    const def = (typeof VERITABANI !== 'undefined' && VERITABANI[lvId] && VERITABANI[lvId][cat])
+      ? VERITABANI[lvId][cat].map(w => ({...w}))
+      : [];
+    this.save(lvId, cat, def);
+    return def;
+  },
+
+  save(lvId, cat, ws) {
+    localStorage.setItem(this._key(lvId, cat), JSON.stringify(ws));
+  },
+
+  // For main app compatibility — returns all entries flat
+  loadAll(lvId) {
+    const cats = ['harfler','kelimeler','cumleler'];
+    let all = [];
+    cats.forEach(cat => { all = all.concat(this.load(lvId, cat)); });
+    // Also save to the flat key used by index.html
+    try { localStorage.setItem('koko_db_' + lvId, JSON.stringify(all)); } catch(e) {}
+    return all;
+  },
+
+  add(lvId, cat, w) {
+    const ws = this.load(lvId, cat);
+    ws.push(w);
+    this.save(lvId, cat, ws);
+    this.loadAll(lvId); // sync flat key
+  },
+
+  del(lvId, cat, i) {
+    const ws = this.load(lvId, cat);
+    ws.splice(i, 1);
+    this.save(lvId, cat, ws);
+    this.loadAll(lvId); // sync flat key
+  },
+
+  count(lvId) {
+    return ['harfler','kelimeler','cumleler'].reduce((n, cat) => n + this.load(lvId, cat).length, 0);
+  }
+};
+
+// ════════════════════════════════════════════════════════════
+// ADMIN CONTROLLER
+// ════════════════════════════════════════════════════════════
+const Adm = {
+  lvId: 'a11',
+  cat:  'harfler',
+
+  init() {
+    this.buildLvTabs();
+    this.updateCatForm();
+    this.renderList();
+    // pre-fill credentials
+    const c = Auth.getCreds();
+    document.getElementById('newUser').value = c.user;
+  },
+
+  buildLvTabs() {
+    const wrap = document.getElementById('lvTabs');
+    wrap.innerHTML = '';
+    LEVELS.forEach(m => {
+      const n = DB.count(m.id);
+      const btn = document.createElement('button');
+      btn.className = 'tab' + (m.id === this.lvId ? ' on' : '');
+      btn.innerHTML = `${m.label}<span class="cnt">${n}</span>`;
+      btn.onclick = () => { this.lvId = m.id; this.buildLvTabs(); this.renderList(); };
+      wrap.appendChild(btn);
+    });
+  },
+
+  setCat(cat) {
+    this.cat = cat;
+    this.updateCatForm();
+    this.renderList();
+  },
+
+  updateCatForm() {
+    // Show/hide artikel and type fields based on category
+    const artF  = document.getElementById('artField');
+    const typeF = document.getElementById('typeField');
+    const inTyp = document.getElementById('inTyp');
+
+    if (this.cat === 'harfler') {
+      artF.style.display  = 'none';
+      typeF.style.display = 'none';
+    } else if (this.cat === 'kelimeler') {
+      artF.style.display  = '';
+      typeF.style.display = 'none';
+      document.getElementById('inArt').value = '';
+    } else { // cumleler
+      artF.style.display  = 'none';
+      typeF.style.display = '';
+      // set default type options for cumleler
+      inTyp.innerHTML = '<option value="cümle">cümle</option><option value="deyim">deyim</option>';
+    }
+
+    // Update badge hint in form
+    const titles = { harfler:'Harf Ekle', kelimeler:'Kelime Ekle', cumleler:'Cümle / Deyim Ekle' };
+    // (just visual — no label element to change here)
+  },
+
+  renderList() {
+    const q    = (document.getElementById('srch').value || '').toLowerCase();
+    const ws   = DB.load(this.lvId, this.cat);
+    const lm   = LEVELS.find(m => m.id === this.lvId);
+    const catN = { harfler:'Harfler', kelimeler:'Kelimeler', cumleler:'Cümleler & Deyimler' }[this.cat];
+
+    document.getElementById('listTitle').textContent = `${lm.label} — ${catN}`;
+    document.getElementById('listInfo').textContent  = `${ws.length} giriş`;
+
+    const filtered = ws.map((w,i) => ({w,i}))
+      .filter(({w}) => !q || w.de.toLowerCase().includes(q) || w.tr.toLowerCase().includes(q));
+
+    const list = document.getElementById('wlist');
+    if (!filtered.length) {
+      list.innerHTML = `<div class="empty">${q ? 'Sonuç bulunamadı.' : 'Henüz giriş yok. Yukarıdan ekleyin.'}</div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(({w,i}) => {
+      const tt = w.type || (this.cat === 'harfler' ? 'harf' : 'kelime');
+      let deD = w.de;
+      const artH = w.article ? `<span class="wart">${esc(w.article)}</span>` : '';
+      if (w.article) { const pfx = w.article + ' '; if (deD.startsWith(pfx)) deD = deD.slice(pfx.length); }
+
+      return `<div class="wrow">
+        <span class="wbadge ${tt}">${tt}</span>
+        <span class="wde">${artH}${esc(deD)}</span>
+        <span class="wtr">${esc(w.tr)}</span>
+        <span class="wph">${esc(w.phonetic||'')}</span>
+        <button class="wdel" onclick="Adm.del(${i})" title="Sil">✕</button>
+      </div>`;
+    }).join('');
+  },
+
+  addEntry: null, // defined below as free function → calls Adm internally
+
+  del(i) {
+    const ws = DB.load(this.lvId, this.cat);
+    if (!confirm(`"${ws[i].de}" silinsin mi?`)) return;
+    DB.del(this.lvId, this.cat, i);
+    this.buildLvTabs();
+    this.renderList();
+    toast('Silindi', 'red');
+  }
+};
+
+// expose setCat globally
+function setCat(cat) { Adm.setCat(cat); document.querySelectorAll('.cattab').forEach(t => t.classList.toggle('on', t.dataset.cat === cat)); }
+
+function addEntry() {
+  const de  = (document.getElementById('inDe').value || '').trim();
+  const tr  = (document.getElementById('inTr').value || '').trim();
+  const ph  = (document.getElementById('inPh').value || '').trim();
+  const art = document.getElementById('inArt').value;
+  const typ = document.getElementById('inTyp').value;
+
+  if (!de || !tr) { alert('Almanca ve Türkçe alanları zorunludur.'); return; }
+
+  const w = { de, tr };
+  if (ph)  w.phonetic = ph;
+
+  if (Adm.cat === 'harfler') {
+    w.type = 'harf';
+  } else if (Adm.cat === 'kelimeler') {
+    if (art) w.article = art;
+  } else {
+    w.type = typ;
+  }
+
+  DB.add(Adm.lvId, Adm.cat, w);
+
+  ['inDe','inTr','inPh'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('inArt').value = '';
+  document.getElementById('inTyp').selectedIndex = 0;
+
+  Adm.buildLvTabs();
+  Adm.renderList();
+  toast('Eklendi ✓', 'green');
+}
+
+function changeCredentials() {
+  const newU = document.getElementById('newUser').value.trim();
+  const cur  = document.getElementById('curPass').value;
+  const np1  = document.getElementById('newPass').value;
+  const np2  = document.getElementById('newPass2').value;
+  const msg  = document.getElementById('pwMsg');
+
+  const creds = Auth.getCreds();
+  if (cur !== creds.pass) { msg.textContent = 'Mevcut şifre yanlış.'; msg.className = 'pw-msg err'; return; }
+  if (!newU) { msg.textContent = 'Kullanıcı adı boş olamaz.'; msg.className = 'pw-msg err'; return; }
+  if (np1 !== np2)   { msg.textContent = 'Yeni şifreler eşleşmiyor.'; msg.className = 'pw-msg err'; return; }
+  if (np1.length < 4){ msg.textContent = 'Şifre en az 4 karakter olmalıdır.'; msg.className = 'pw-msg err'; return; }
+
+  Auth.setCreds(newU, np1 || creds.pass);
+  msg.textContent = '✓ Kaydedildi. Bir sonraki girişte yeni bilgiler kullanılacak.';
+  msg.className   = 'pw-msg ok';
+  ['curPass','newPass','newPass2'].forEach(id => document.getElementById(id).value = '');
+}
+
+function seedDefaults() {
+  if (!confirm(`"${Adm.lvId}" seviyesine veritabani.js varsayılan verileri eklensin mi? Mevcut veriler korunur.`)) return;
+  const cats = ['harfler','kelimeler','cumleler'];
+  cats.forEach(cat => {
+    const existing = DB.load(Adm.lvId, cat);
+    const defs = (typeof VERITABANI !== 'undefined' && VERITABANI[Adm.lvId] && VERITABANI[Adm.lvId][cat])
+      ? VERITABANI[Adm.lvId][cat]
+      : [];
+    // Add only entries not already in existing (by de)
+    const existingDe = new Set(existing.map(w => w.de));
+    const toAdd = defs.filter(w => !existingDe.has(w.de));
+    const merged = [...existing, ...toAdd];
+    DB.save(Adm.lvId, cat, merged);
+  });
+  DB.loadAll(Adm.lvId);
+  Adm.buildLvTabs(); Adm.renderList();
+  toast('Varsayılan veriler eklendi ✓', 'green');
+}
+
+function resetLevel() {
+  if (!confirm(`"${Adm.lvId}" seviyesindeki TÜM veriler silinecek. Emin misiniz?`)) return;
+  ['harfler','kelimeler','cumleler'].forEach(cat => DB.save(Adm.lvId, cat, []));
+  localStorage.removeItem('koko_db_' + Adm.lvId);
+  Adm.buildLvTabs(); Adm.renderList();
+  toast('Seviye sıfırlandı', 'red');
+}
+
+function resetAll() {
+  if (!confirm('TÜM seviyelerdeki veriler silinecek. Bu işlem geri alınamaz!')) return;
+  LEVELS.forEach(m => {
+    ['harfler','kelimeler','cumleler'].forEach(cat => DB.save(m.id, cat, []));
+    localStorage.removeItem('koko_db_' + m.id);
+  });
+  Adm.buildLvTabs(); Adm.renderList();
+  toast('Tüm veriler silindi', 'red');
+}
+
+// ════════════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════════════
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+let toastTimer;
+function toast(msg, color) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className   = `toast show ${color}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.classList.remove('show'); }, 2500);
+}
+
+// ════════════════════════════════════════════════════════════
+// BOOT
+// ════════════════════════════════════════════════════════════
+if (isLoggedIn()) {
+  showAdmin();
+}
+// Auto-focus username if not logged in
+window.addEventListener('DOMContentLoaded', () => {
+  if (!isLoggedIn()) document.getElementById('inUser').focus();
+});
+</script>
+</body>
+</html>
