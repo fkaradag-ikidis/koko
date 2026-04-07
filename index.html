@@ -404,75 +404,92 @@ const App = (function() {
   }
 
   /* ── SPEECH RECOGNITION ────────────────── */
-  // Attempt counter: after 2 failed de-DE attempts, try tr-TR as fallback
-  let failCount = 0;
+  let failCount     = 0;  // consecutive de-DE failures before tr-TR fallback
+  let resultHandled = false; // prevents onend from restarting after a result
 
   function buildRecog(lang) {
     if (!SR) return null;
-    const r = new SR();
+    const r  = new SR();
     r.continuous      = false;
     r.interimResults  = false;
-    r.maxAlternatives = 6;   // more candidates = better matching
+    r.maxAlternatives = 6;
     r.lang            = lang || 'de-DE';
 
     r.onstart = () => {
-      recogRunning = true;
-      listening    = true;
+      recogRunning  = true;
+      resultHandled = false;
+      listening     = true;
       setLi(true);
       setMsg('Sıra sizde… tekrar edin', 'li');
     };
 
     r.onresult = e => {
-      recogRunning = false;
+      recogRunning  = false;
+      resultHandled = true;      // ← flag: onend must NOT restart
+      clearTimeout(restartTimer);
+
       const phrases = [];
       for (let ri = 0; ri < e.results.length; ri++)
-        for (let ai = 0; ai < e.results[ri].length; ai++)
-          phrases.push(e.results[ri][ai].transcript.toLowerCase().trim());
-      onSpoken(phrases, r.lang);
+        for (let ai = 0; ai < e.results[ri].length; ai++) {
+          const t = e.results[ri][ai].transcript.toLowerCase().trim();
+          if (t) phrases.push(t);
+        }
+      console.log('[koko] onresult lang=' + r.lang + ' phrases:', phrases);
+      if (phrases.length) onSpoken(phrases, r.lang);
+      else { resultHandled = false; scheduleRestart(400); }
     };
 
     r.onnomatch = () => {
-      recogRunning = false; listening = false; setLi(false);
-      scheduleRestart(600);
+      recogRunning = false;
+      if (!resultHandled) scheduleRestart(500);
     };
 
     r.onerror = ev => {
       recogRunning = false; listening = false; setLi(false);
-      console.warn('SR error:', ev.error, '(lang:', r.lang, ')');
+      console.warn('[koko] SR error:', ev.error, 'lang:', r.lang);
       if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
         $('micBanner').classList.add('show');
         setMsg('Mikrofon izni reddedildi', 'err');
         return;
       }
-      scheduleRestart(ev.error === 'no-speech' ? 300 : 1200);
+      if (!resultHandled)
+        scheduleRestart(ev.error === 'no-speech' ? 350 : 1200);
     };
 
     r.onend = () => {
       recogRunning = false; listening = false; setLi(false);
-      if (started && !speaking) scheduleRestart(250);
+      // Only restart if NO result was received and we're not already handling one
+      if (!resultHandled && started && !speaking)
+        scheduleRestart(300);
     };
 
     return r;
   }
 
-  function scheduleRestart(ms) {
+  function scheduleRestart(ms, lang) {
     clearTimeout(restartTimer);
     if (!started || speaking) return;
-    restartTimer = setTimeout(() => startListen(), ms);
+    restartTimer = setTimeout(() => startListen(lang), ms);
   }
 
   function startListen(lang) {
     clearTimeout(restartTimer);
     if (!started || speaking || recogRunning) return;
     if (!SR) { setMsg('Ses tanıma desteklenmiyor — butonları kullanın', 'err'); return; }
+    resultHandled = false;
     recog = buildRecog(lang || 'de-DE');
     if (!recog) return;
     try { recog.start(); }
-    catch(e) { console.warn('recog.start failed:', e); recogRunning = false; scheduleRestart(900); }
+    catch(e) {
+      console.warn('[koko] recog.start failed:', e);
+      recogRunning = false;
+      scheduleRestart(900);
+    }
   }
 
   function stopListen() {
     clearTimeout(restartTimer);
+    resultHandled = true; // prevent onend from restarting
     if (recog && recogRunning) try { recog.abort(); } catch(e) {}
     recogRunning = false; listening = false; setLi(false);
   }
@@ -538,51 +555,63 @@ const App = (function() {
   }
 
   function isMatch(spokenPhrases, word) {
-    const raw   = word.de.toLowerCase();
-    const target= stripArt(raw, word.article);
-    const tClean= clean(target);
-    const tPhon = phonetize(tClean);
-    const tWords= tClean.split(' ').filter(w=>w.length>1);
+    const raw     = word.de.toLowerCase();
+    const target  = stripArt(raw, word.article);
+    const tClean  = clean(target);
+    const tPhon   = phonetize(tClean);
+    const tWords  = tClean.split(' ').filter(w => w.length > 1);
+    const isSingle   = tClean.length <= 2;   // single letter / short word
     const isSentence = tWords.length >= 3;
-    const thr   = threshold(tClean.length);
+    const thr     = threshold(tClean.length);
+
+    console.log('[koko] isMatch target="' + tClean + '" phon="' + tPhon + '" thr=' + thr);
 
     for (const phrase of spokenPhrases) {
-      const s      = clean(phrase);
-      const sPhon  = phonetize(s);
+      const s     = clean(phrase);
+      const sPhon = phonetize(s);
+      console.log('[koko]   phrase="' + s + '" phon="' + sPhon + '" lev=' + lev(s,tClean).toFixed(2) + ' levP=' + lev(sPhon,tPhon).toFixed(2));
 
-      // S1 — exact
-      if (s === tClean || s === raw) return true;
+      // S1 — Exact match (incl. with article)
+      if (s === tClean || s === clean(raw)) return true;
 
-      // S2 — contains (good for sentences where extra words spoken)
+      // S2 — Contains (sentence with extra spoken words)
       if (s.includes(tClean) || tClean.includes(s)) return true;
 
-      // S3 — Levenshtein on cleaned strings
+      // S3 — Single-letter special: accept any phrase starting with that letter
+      //      or the letter name (e.g. "a" → accept "ah", "aa", "a:")
+      if (isSingle) {
+        if (s.startsWith(tClean) || tClean.startsWith(s.charAt(0))) return true;
+        // Also accept German letter names: "a"=>"ah", "e"=>"eh", "i"=>"ih" etc.
+        const letterSounds = {a:'ah',e:'eh',i:'ih',o:'oh',u:'uh',y:'up'};
+        if (letterSounds[tClean] && s.includes(letterSounds[tClean])) return true;
+      }
+
+      // S4 — Levenshtein on cleaned strings
       if (lev(s, tClean) >= thr) return true;
 
-      // S4 — Levenshtein on phonetic representations
-      //      catches accented pronunciations: "fünf"→"fünf" vs "funf"
+      // S5 — Levenshtein on phonetic strings
+      //      Handles: fünf/funf, über/uber, ß/ss, ch/h, sch/sh
       if (lev(sPhon, tPhon) >= thr) return true;
 
-      // S5 — Word overlap for multi-word targets
-      //      "Guten Morgen" → match if ≥60% words found
-      if (isSentence && wordOverlap(s, tClean) >= 0.6) return true;
+      // S6 — Phonetic starts-with (partial pronunciation accepted for short words)
+      if (tClean.length <= 8 && tPhon.length >= 2 && sPhon.startsWith(tPhon.slice(0,2))) return true;
 
-      // S6 — First-syllable / prefix check for very short words (≤5 chars)
-      //      "dreißig" → accept "dreiß" or "dress"
-      if (tClean.length <= 5 && s.length >= 2 && tClean.startsWith(s.slice(0,2))) return true;
+      // S7 — Word overlap for sentences (≥55% of content words spoken)
+      if (isSentence && wordOverlap(s, tClean) >= 0.55) return true;
 
-      // S7 — Key-word check: all content words (len>2) spoken
+      // S8 — All content words individually matched (phonetically lenient)
       if (isSentence) {
-        const contentWords = tWords.filter(w=>w.length > 2);
-        const sSet = new Set(s.split(' '));
-        const sPhonSet = new Set(sPhon.split(''));
-        const allFound = contentWords.every(cw => {
-          const cwp = phonetize(cw);
-          // word present, or phonetic within 1 char edit of any spoken word
-          return s.includes(cw) || [...sSet].some(sw => lev(sw, cw) >= 0.7)
-              || sPhon.includes(cwp.slice(0, Math.max(2, cwp.length-1)));
-        });
-        if (allFound) return true;
+        const contentWords = tWords.filter(w => w.length > 2);
+        if (contentWords.length > 0) {
+          const sTokens = s.split(' ');
+          const allFound = contentWords.every(cw => {
+            const cwp = phonetize(cw);
+            return s.includes(cw)
+              || sTokens.some(sw => lev(sw, cw) >= 0.72)
+              || sPhon.includes(cwp.slice(0, Math.max(2, cwp.length - 1)));
+          });
+          if (allFound) return true;
+        }
       }
     }
     return false;
@@ -590,15 +619,16 @@ const App = (function() {
 
   /* ── HANDLE SPOKEN INPUT ───────────────── */
   function onSpoken(phrases, lang) {
-    stopListen();
-    console.log('🎙️ [' + lang + ']', phrases);
+    // Do NOT call stopListen() here — resultHandled flag already prevents restart.
+    // stopListen() would abort a potentially still-running recognizer.
+    setLi(false);
 
-    // Commands (accept in any language)
+    console.log('[koko] onSpoken lang=' + lang, phrases);
+
+    // Commands — check every phrase in any language
     for (const txt of phrases) {
-      if (txt.includes('geç') || txt.includes('atla') || txt.includes('weiter') || txt.includes('skip') || txt.includes('next'))
-        { skip(); return; }
-      if (txt.includes('tekrar') || txt.includes('wieder') || txt.includes('repeat') || txt.includes('nochmal'))
-        { repeat(); return; }
+      if (/geç|atla|weiter|skip|next/.test(txt))   { failCount=0; skip();   return; }
+      if (/tekrar|wieder|repeat|nochmal/.test(txt)) { failCount=0; repeat(); return; }
     }
 
     if (!words.length) return;
@@ -608,28 +638,37 @@ const App = (function() {
       failCount = 0;
       correctAnswer();
     } else {
-      // After 2 failed de-DE attempts, try Turkish STT once (Turkish speakers
-      // often pronounce German with Turkish phonetics, which Turkish STT captures better)
+      // After 2 consecutive de-DE misses → try tr-TR once
+      // (Turkish STT often captures Turkish-accented German better)
       if (lang === 'de-DE') {
         failCount++;
         if (failCount === 2) {
           failCount = 0;
-          setMsg(`Duyulan: "${phrases[0]}" — farklı algılamayı deniyor…`, 'err');
-          setTimeout(() => startListen('tr-TR'), 400);
+          setMsg('Farklı tanıma motoru deneniyor…', 'sp');
+          // Start tr-TR attempt — scheduleRestart with lang param
+          scheduleRestart(350, 'tr-TR');
           return;
         }
+        // 1st fail: show what was heard, restart de-DE quickly
+        setMsg('Duyulan: "' + phrases[0] + '" — tekrar edin', 'err');
+        scheduleRestart(1800, 'de-DE');
+      } else {
+        // tr-TR fallback also failed → show message, restart de-DE
+        failCount = 0;
+        attempts++;
+        streak = 0;
+        setMsg('Duyulan: "' + phrases[0] + '" — tekrar deneyin', 'err');
+        updateStats();
+        scheduleRestart(2200, 'de-DE');
       }
-      // tr-TR fallback also failed → mark wrong
-      attempts++;
-      streak = 0;
-      setMsg(`Duyulan: "${phrases[0]}" — tekrar deneyin`, 'err');
-      updateStats();
-      scheduleRestart(2200);
     }
   }
 
   /* ── CORRECT ───────────────────────────── */
   async function correctAnswer() {
+    // Set speaking=true IMMEDIATELY so onend cannot schedule a restart
+    speaking = true; setSp(true);
+
     correct++; attempts++; streak++; daily++; total++;
     updateStats();
     setMsg('Mükemmel! ✅', 'ok');
@@ -637,7 +676,6 @@ const App = (function() {
     confetti();
     showTr();
 
-    speaking = true; setSp(true);
     await speak(words[wIdx].tr, 'tr-TR');
     speaking = false; setSp(false); setOk(false);
 
@@ -751,8 +789,8 @@ const App = (function() {
     await speak(words[wIdx].de, 'de-DE');
 
     speaking = false; setSp(false);
-    // After speaking, start listening
-    setTimeout(() => startListen(), 400);
+    // Wait 600ms after TTS ends so microphone doesn't pick up TTS echo
+    setTimeout(() => startListen('de-DE'), 600);
   }
 
   /* ── START ─────────────────────────────── */
